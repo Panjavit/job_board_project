@@ -2,6 +2,7 @@ import express from 'express'; //สำหรับการสร้าง Rout
 import bcrypt from 'bcryptjs'; //เข้ารหัสรหัสผ่าน
 import { PrismaClient } from '@prisma/client'; //ใช้เพื่อเชื่อมต่อและส่งคำสั่งไปยังฐานข้อมูล PostgreSQL
 import jwt from 'jsonwebtoken';
+import { protect, authorize } from '../middleware/auth.js'; //
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -89,5 +90,14 @@ router.post('/login', async (req, res) =>{
         res.status(500).send('Server Error');
     }
 });
+
+// @route   GET /api/auth/me
+router.get('/me', protect, async(req, res) =>{
+    res.status(200).json({
+        success: true,
+        data: req.user
+    })
+})
+
 // (ใส่ Route สำหรับ Login และ Social Login ต่อไป)
 export default router;
