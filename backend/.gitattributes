@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# * text=auto: ให้ Git ตรวจจับไฟล์ที่เป็น text โดยอัตโนมัติ
+# eol=lf: เมื่อ commit ไฟล์ขึ้นไปบน repository ให้แปลง Line Endings ทั้งหมดเป็นแบบ LF เสมอ
