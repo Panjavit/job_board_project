@@ -54,7 +54,11 @@ router.post('/login', async (req, res) =>{
     try {
         const {email,password} = req.body;
         const user = await prisma.user.findUnique({
-            where: { email }
+            where: { email },
+            include: {
+                candidateProfile: {select: {id: true}}, // สั่งให้ดึงข้อมูล candidateProfile มาด้วย
+                companyProfile: {select: {id: true}}    // สั่งให้ดึงข้อมูล companyProfile มาด้วย
+            }
         });
         if (!user || !user.password){
             return res.status(400).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'})
@@ -65,11 +69,13 @@ router.post('/login', async (req, res) =>{
             return res.status(400).json({ message: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง'})
         }
 
+        const profileId = user.candidateProfile?.id || user.companyProfile?.id;
+
         //สร้างข้อมูลสำหรับ Token
         const payload = {
             user: {
                 id: user.id,
-                profileId: user.profileId,
+                profileId: profileId,
                 role: user.role
             }
         };

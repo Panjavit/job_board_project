@@ -3,6 +3,7 @@ import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import 'dotenv/config'; // ช่วยให้เราใช้ตัวแปรจาก .env ได้
 import authRoutes from './routes/auth.js';
+import profileRoutes from './routes/profiles.js';
 
 //(สร้างแอปและตัวเชื่อมต่อฐานข้อมูล)
 const app = express();
@@ -17,7 +18,8 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Job Board API!'});
 });
 
-app.use('/api/auth', authRoutes); //
+app.use('/api/auth', authRoutes); 
+app.use('/api/profiles', profileRoutes);
 
 const PORT = process.env.PORT || 5001; //http://localhost:5001
 app.listen(PORT, () =>{
