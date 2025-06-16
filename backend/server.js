@@ -2,8 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
 import 'dotenv/config'; // ช่วยให้เราใช้ตัวแปรจาก .env ได้
+
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profiles.js';
+import aiRoutes from './routes/ai.js';
 
 //(สร้างแอปและตัวเชื่อมต่อฐานข้อมูล)
 const app = express();
@@ -20,6 +22,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes); 
 app.use('/api/profiles', profileRoutes);
+app.use('/api/ai', aiRoutes);
 
 const PORT = process.env.PORT || 5001; //http://localhost:5001
 app.listen(PORT, () =>{
