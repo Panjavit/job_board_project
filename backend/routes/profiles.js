@@ -14,6 +14,13 @@ router.get(
     try {
       const profile = await prisma.candidateProfile.findUnique({
         where: { id: req.user.profileId },
+        include: {
+          skills: {
+            include: {
+              skill: true, //เอาชื่อ Skill มาด้วย
+            }
+          }
+        }
       });
 
       if (!profile) {
@@ -34,7 +41,6 @@ router.put(
   protect,
   authorize("CANDIDATE"),
   async (req, res) => {
-    try {
       const {
         fullName,
         contactEmail,
@@ -42,24 +48,69 @@ router.put(
         education,
         bio,
         youtubeIntroLink,
+        skills,
       } = req.body;
 
-      const updateProfile = await prisma.candidateProfile.update({
+      try {
+      // 2. ใช้ Prisma Transaction เพื่อจัดการหลาย Operation พร้อมกัน
+      await prisma.$transaction(async (tx) => {
+        // 2.1 อัปเดตข้อมูลพื้นฐานใน CandidateProfile
+        await tx.candidateProfile.update({ //
+          where: { id: req.user.profileId },
+          data: {
+            fullName,
+            contactEmail,
+            lineUserId,
+            education,
+            bio,
+            youtubeIntroLink,
+          },
+        });
+
+        // 2.2 ล้าง Skill เก่าทั้งหมดของ user คนนี้ทิ้งก่อน
+        await tx.userSkill.deleteMany({
+          where: { candidateProfileId: req.user.profileId },
+        });
+
+        // 2.3 เพิ่ม Skill ที่ส่งมาใหม่ทั้งหมด
+        if (skills && skills.length > 0) {
+          for (const userSkill of skills) {
+            // ค้นหาหรือสร้าง Skill ใหม่ในตาราง 'Skill'
+            const skillRecord = await tx.skill.upsert({
+              where: { name: userSkill.skillName },
+              update: {},
+              create: { name: userSkill.skillName },
+            });
+
+            // สร้างความสัมพันธ์ในตาราง 'UserSkill' พร้อมกับ rating
+            await tx.userSkill.create({
+              data: {
+                candidateProfileId: req.user.profileId,
+                skillId: skillRecord.id,
+                rating: userSkill.rating,
+              },
+            });
+          }
+        }
+      });
+
+      // 3. ดึงข้อมูลโปรไฟล์ล่าสุดพร้อม Skill ทั้งหมดเพื่อส่งกลับไป
+      const finalProfile = await prisma.candidateProfile.findUnique({
         where: { id: req.user.profileId },
-        data: {
-          fullName,
-          contactEmail,
-          lineUserId,
-          education,
-          bio,
-          youtubeIntroLink,
+        include: {
+          skills: {
+            include: {
+              skill: true,
+            },
+          },
         },
       });
 
-      res.json(updateProfile);
+      res.json(finalProfile);
+
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Server Error');
+      console.error("Error updating candidate profile with skills:", error);
+      res.status(500).send("Server Error");
     }
   }
 );
