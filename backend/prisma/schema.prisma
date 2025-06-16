@@ -36,6 +36,7 @@ model CandidateProfile {
   bio              String?
   youtubeIntroLink String?
   applications     Application[]
+  skills           UserSkill[]
 }
 
 model CompanyProfile {
@@ -67,6 +68,28 @@ model Application {
   applicationCode    String           @unique
   status             ApplicationStatus @default(APPLIED)
   createdAt          DateTime         @default(now())
+}
+
+// เพิ่ม Model ใหม่สำหรับเก็บชื่อ Skill
+model Skill {
+  id   String @id @default(cuid())
+  name String @unique // ชื่อ Skill เช่น "React", "Python", "Figma"
+
+  users UserSkill[]
+}
+
+// เพิ่ม Model ใหม่สำหรับเป็นตารางกลาง
+model UserSkill {
+  id        String @id @default(cuid())
+  rating    Int    // ระดับความถนัด 1-10
+
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id])
+  candidateProfileId String
+
+  skill   Skill  @relation(fields: [skillId], references: [id])
+  skillId String
+
+  @@unique([candidateProfileId, skillId]) // ป้องกันการใส่ Skill ซ้ำในคนเดียว
 }
 
 enum Role {
