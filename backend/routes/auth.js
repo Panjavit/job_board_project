@@ -32,10 +32,10 @@ router.post('/register', async (req, res) => { //req (Request),res (Response)  �
                 password: hashedPassword,
                 role: role.toUpperCase(), // 'CANDIDATE' or 'COMPANY'
                 // สร้าง Profile ที่เชื่อมกันไปพร้อมๆ กัน
-                candidateProfile: role === 'candidate' ? {
+                candidateProfile: role.toLowerCase() === 'candidate' ? {
                     create: { fullName: name, contactEmail: email }
                 } : undefined,
-                companyProfile: role === 'company' ? {
+                companyProfile: role.toLowerCase() === 'company' ? {
                     create: { companyName: name, contactInstructions: `ติดต่อผ่าน ${email}` }
                 } : undefined,
             }

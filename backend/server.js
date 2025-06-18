@@ -6,6 +6,8 @@ import 'dotenv/config'; // ช่วยให้เราใช้ตัวแ�
 import authRoutes from './routes/auth.js';
 import profileRoutes from './routes/profiles.js';
 import aiRoutes from './routes/ai.js';
+import studentRoutes from './routes/students.js';
+import interactionRoutes from './routes/interactions.js';
 
 //(สร้างแอปและตัวเชื่อมต่อฐานข้อมูล)
 const app = express();
@@ -23,12 +25,14 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes); 
 app.use('/api/profiles', profileRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/interactions', interactionRoutes);
 
 const PORT = process.env.PORT || 5001; //http://localhost:5001
 app.listen(PORT, () =>{
     console.log(`Server is running on port ${PORT}`);
 });
 
-process.memoryUsage('beforeExit', async () =>{
+process.on('beforeExit', async () =>{
     await prisma.$disconnect();
 });

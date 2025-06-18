@@ -15,7 +15,7 @@ router.get(
       const profile = await prisma.candidateProfile.findUnique({
         where: { id: req.user.profileId },
         include: {
-          skills: {
+          skills: { //ดึงข้อมูล skill ทั้งหมดทีผูกกับโปรไฟล์นี้
             include: {
               skill: true, //เอาชื่อ Skill มาด้วย
             }
@@ -48,6 +48,7 @@ router.put(
         education,
         bio,
         youtubeIntroLink,
+        desiredPosition,
         skills,
       } = req.body;
 
@@ -55,7 +56,7 @@ router.put(
       // 2. ใช้ Prisma Transaction เพื่อจัดการหลาย Operation พร้อมกัน
       await prisma.$transaction(async (tx) => {
         // 2.1 อัปเดตข้อมูลพื้นฐานใน CandidateProfile
-        await tx.candidateProfile.update({ //
+        await tx.candidateProfile.update({ //tx(transaction)  Transaction รับประกันว่าการทำงานกับฐานข้อมูลหลายๆ อย่างที่อยู่ข้างใน จะต้องสำเร็จทั้งหมด หรือล้มเหลวทั้งหมด
           where: { id: req.user.profileId },
           data: {
             fullName,
@@ -64,6 +65,7 @@ router.put(
             education,
             bio,
             youtubeIntroLink,
+            desiredPosition,
           },
         });
 
@@ -76,7 +78,7 @@ router.put(
         if (skills && skills.length > 0) {
           for (const userSkill of skills) {
             // ค้นหาหรือสร้าง Skill ใหม่ในตาราง 'Skill'
-            const skillRecord = await tx.skill.upsert({
+            const skillRecord = await tx.skill.upsert({ //ให้ไปหาทักษะชื่อนี้ ถ้ามีอยู่แล้วก็ใช้ id เดิม
               where: { name: userSkill.skillName },
               update: {},
               create: { name: userSkill.skillName },
@@ -117,7 +119,7 @@ router.put(
 
 // @route   GET /api/profiles/company/me (Get current logged-in company's profile)
 router.get('/company/me', protect, authorize('COMPANY'), async (req, res) =>{
-    console.log(`--- ✅ Handler for GET /api/profiles/company/me was matched! User ID: ${req.user.id} ---`);
+    console.log(` Handler for GET /api/profiles/company/me was matched! User ID: ${req.user.id} ---`);
     try {
         const profile = await prisma.companyProfile.findUnique({
             where: {id: req.user.profileId}
