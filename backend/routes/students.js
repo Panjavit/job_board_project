@@ -8,7 +8,7 @@ const router = express.Router();
 // @route   GET /api/students
 router.get('/', protect, authorize("COMPANY"), async (req, res) => {
     try {
-        const { position, skills, page = 1, limit = 10 } = req.query;
+        const { position, skills, studyYear, studentCode, page = 1, limit = 10 } = req.query;
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);
         const skip = (pageNum - 1) * limitNum;
@@ -34,6 +34,20 @@ router.get('/', protect, authorize("COMPANY"), async (req, res) => {
                         }
                     }
                 }
+            }
+        }
+
+        if(studyYear){
+            const year = parseInt(studyYear, 10);
+            if(!isNaN(year)){
+                where.studyYear = year;
+            }
+        }
+
+        if(studentCode){
+            where.studentCode = {
+                equals: studentCode,
+                mode: 'insensitive' //สำหรับการค้นหาที่ไม่สนตัวพิมพ์เล็ก/ใหญ่
             }
         }
 

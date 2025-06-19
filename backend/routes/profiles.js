@@ -45,7 +45,8 @@ router.put(
         fullName,
         contactEmail,
         lineUserId,
-        education,
+        major,            
+        studyYear,
         bio,
         youtubeIntroLink,
         desiredPosition,
@@ -53,19 +54,56 @@ router.put(
       } = req.body;
 
       try {
-      // 2. ใช้ Prisma Transaction เพื่อจัดการหลาย Operation พร้อมกัน
+      //ใช้ Prisma Transaction เพื่อจัดการหลาย Operation พร้อมกัน
       await prisma.$transaction(async (tx) => {
-        // 2.1 อัปเดตข้อมูลพื้นฐานใน CandidateProfile
+
+        //ดึงโปรไฟล์ปัจจุบันเพื่อตรวจสอบว่ามีรหัสหรือยัง
+        const currentProfile = await tx.candidateProfile.findUnique({
+          where: {id: req.user.profileId},
+          select: {studentCode: true}
+        })
+
+        let studentCode = currentProfile.studentCode //ใช้รหัสเดิมเป็นค่าเริ่มต้น
+
+        //สร้างรหัสก็ต่อเมื่อ "ยังไม่มีรหัส" และ "มีการกรอก desiredPosition"
+        if(!studentCode && desiredPosition){
+          const prefix = desiredPosition // สร้าง Prefix จาก desiredPosition (เช่น "Backend Developer" -> "BD")
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase(); 
+
+          //ค้นหาคนล่าสุดที่มีรหัสขึ้นต้นด้วย Prefix เดียวกัน
+          const lastStudentWithPrefix = await tx.candidateProfile.findFirst({
+            where: {
+              studentCode: {startsWith: prefix},
+            },
+            orderBy: {studentCode: 'desc'},
+          })
+          let newNumber = 1;
+          if(lastStudentWithPrefix && lastStudentWithPrefix.studentCode){ //ถ้าเจอดึงตัวเลขออกมาแล้วบวก 1
+            const lastNumber = parseInt(lastStudentWithPrefix.studentCode.replace(prefix, ''),10);
+            newNumber = lastNumber + 1;
+          }
+          //สร้างรหัสใหม่พร้อมกับเติม 0 ข้างหน้า (เช่น BD01, BD02)
+          studentCode = `${prefix}${String(newNumber).padStart(2, '0')}`;
+        }
+
+
+
+        //อัปเดตข้อมูลพื้นฐานใน CandidateProfile
         await tx.candidateProfile.update({ //tx(transaction)  Transaction รับประกันว่าการทำงานกับฐานข้อมูลหลายๆ อย่างที่อยู่ข้างใน จะต้องสำเร็จทั้งหมด หรือล้มเหลวทั้งหมด
           where: { id: req.user.profileId },
           data: {
             fullName,
             contactEmail,
             lineUserId,
-            education,
+            major,
+            studyYear,
             bio,
             youtubeIntroLink,
             desiredPosition,
+            studentCode,
           },
         });
 
@@ -89,7 +127,7 @@ router.put(
               data: {
                 candidateProfileId: req.user.profileId,
                 skillId: skillRecord.id,
-                rating: userSkill.rating,
+                rating: parseInt(userSkill.rating, 10),
               },
             });
           }

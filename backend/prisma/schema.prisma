@@ -26,6 +26,7 @@ model User {
 
 model CandidateProfile {
   id                String        @id @default(cuid())
+  studentCode       String?       @unique
   fullName          String
   contactEmail      String
   desiredPosition   String?
