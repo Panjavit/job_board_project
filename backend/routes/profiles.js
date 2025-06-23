@@ -35,124 +35,113 @@ router.get(
   }
 );
 
-// @route   PUT /api/profiles/candidate/me (Update current logged-in candidate's profile)
-router.put(
-  "/candidate/me",
-  protect,
-  authorize("CANDIDATE"),
-  async (req, res) => {
-      const {
-        fullName,
-        contactEmail,
-        lineUserId,
-        major,            
-        studyYear,
-        bio,
-        youtubeIntroLink,
-        desiredPosition,
-        skills,
-      } = req.body;
+// @route   PATCH /api/profiles/candidate/me/personal-info  อัปเดตข้อมูลส่วนตัวพื้นฐานของนักศึกษา
+router.patch(
+    "/candidate/me/personal-info",
+    protect,
+    authorize("CANDIDATE"),
+    async (req, res) => {
+        try {
+            // 1. รับข้อมูลทั้งหมดจาก req.body รวมถึงฟิลด์ใหม่
+            const {
+                fullName,
+                contactEmail,
+                major,
+                studyYear,
+                bio,
+                nickname,
+                gender,
+                dateOfBirth,
+                phoneNumber
+            } = req.body;
 
-      try {
-      //ใช้ Prisma Transaction เพื่อจัดการหลาย Operation พร้อมกัน
-      await prisma.$transaction(async (tx) => {
-
-        //ดึงโปรไฟล์ปัจจุบันเพื่อตรวจสอบว่ามีรหัสหรือยัง
-        const currentProfile = await tx.candidateProfile.findUnique({
-          where: {id: req.user.profileId},
-          select: {studentCode: true}
-        })
-
-        let studentCode = currentProfile.studentCode //ใช้รหัสเดิมเป็นค่าเริ่มต้น
-
-        //สร้างรหัสก็ต่อเมื่อ "ยังไม่มีรหัส" และ "มีการกรอก desiredPosition"
-        if(!studentCode && desiredPosition){
-          const prefix = desiredPosition // สร้าง Prefix จาก desiredPosition (เช่น "Backend Developer" -> "BD")
-            .split(' ')
-            .map(word => word[0])
-            .join('')
-            .toUpperCase(); 
-
-          //ค้นหาคนล่าสุดที่มีรหัสขึ้นต้นด้วย Prefix เดียวกัน
-          const lastStudentWithPrefix = await tx.candidateProfile.findFirst({
-            where: {
-              studentCode: {startsWith: prefix},
-            },
-            orderBy: {studentCode: 'desc'},
-          })
-          let newNumber = 1;
-          if(lastStudentWithPrefix && lastStudentWithPrefix.studentCode){ //ถ้าเจอดึงตัวเลขออกมาแล้วบวก 1
-            const lastNumber = parseInt(lastStudentWithPrefix.studentCode.replace(prefix, ''),10);
-            newNumber = lastNumber + 1;
-          }
-          //สร้างรหัสใหม่พร้อมกับเติม 0 ข้างหน้า (เช่น BD01, BD02)
-          studentCode = `${prefix}${String(newNumber).padStart(2, '0')}`;
-        }
-
-
-
-        //อัปเดตข้อมูลพื้นฐานใน CandidateProfile
-        await tx.candidateProfile.update({ //tx(transaction)  Transaction รับประกันว่าการทำงานกับฐานข้อมูลหลายๆ อย่างที่อยู่ข้างใน จะต้องสำเร็จทั้งหมด หรือล้มเหลวทั้งหมด
-          where: { id: req.user.profileId },
-          data: {
-            fullName,
-            contactEmail,
-            lineUserId,
-            major,
-            studyYear,
-            bio,
-            youtubeIntroLink,
-            desiredPosition,
-            studentCode,
-          },
-        });
-
-        // 2.2 ล้าง Skill เก่าทั้งหมดของ user คนนี้ทิ้งก่อน
-        await tx.userSkill.deleteMany({
-          where: { candidateProfileId: req.user.profileId },
-        });
-
-        // 2.3 เพิ่ม Skill ที่ส่งมาใหม่ทั้งหมด
-        if (skills && skills.length > 0) {
-          for (const userSkill of skills) {
-            // ค้นหาหรือสร้าง Skill ใหม่ในตาราง 'Skill'
-            const skillRecord = await tx.skill.upsert({ //ให้ไปหาทักษะชื่อนี้ ถ้ามีอยู่แล้วก็ใช้ id เดิม
-              where: { name: userSkill.skillName },
-              update: {},
-              create: { name: userSkill.skillName },
+            // 2. อัปเดตข้อมูลลงในฐานข้อมูล
+            const updatedProfile = await prisma.candidateProfile.update({
+                where: { id: req.user.profileId },
+                data: {
+                    fullName,
+                    contactEmail,
+                    major,
+                    studyYear: studyYear ? parseInt(studyYear, 10) : null,
+                    bio,
+                    // --- เพิ่มฟิลด์ใหม่เข้าไปใน data object ---
+                    nickname,
+                    gender,
+                    // แปลงค่าวันที่ให้ถูกต้องก่อนบันทึก
+                    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                    phoneNumber
+                },
             });
 
-            // สร้างความสัมพันธ์ในตาราง 'UserSkill' พร้อมกับ rating
-            await tx.userSkill.create({
-              data: {
-                candidateProfileId: req.user.profileId,
-                skillId: skillRecord.id,
-                rating: parseInt(userSkill.rating, 10),
-              },
-            });
-          }
+            // 3. ส่งข้อมูลที่อัปเดตแล้วกลับไป
+            res.json(updatedProfile);
+
+        } catch (error) {
+            console.error("Error updating personal info:", error);
+            res.status(500).send("Server Error");
         }
-      });
-
-      // 3. ดึงข้อมูลโปรไฟล์ล่าสุดพร้อม Skill ทั้งหมดเพื่อส่งกลับไป
-      const finalProfile = await prisma.candidateProfile.findUnique({
-        where: { id: req.user.profileId },
-        include: {
-          skills: {
-            include: {
-              skill: true,
-            },
-          },
-        },
-      });
-
-      res.json(finalProfile);
-
-    } catch (error) {
-      console.error("Error updating candidate profile with skills:", error);
-      res.status(500).send("Server Error");
     }
-  }
+);
+
+//@route   PUT /api/profiles/candidate/me/skills อัปเดตรายการทักษะทั้งหมดของนักศึกษา (ลบของเก่าและสร้างใหม่)
+router.put(
+    "/candidate/me/skills",
+    protect,
+    authorize("CANDIDATE"),
+    async (req, res) => {
+        const { skills } = req.body; // รับแค่ skills
+
+        // 1. ตรวจสอบข้อมูลเบื้องต้น
+        if (!Array.isArray(skills)) {
+            return res.status(400).json({ message: "Skills must be an array" });
+        }
+
+        try {
+            await prisma.$transaction(async (tx) => {
+                // 2. ล้าง Skill เก่าทั้งหมดของ user คนนี้ทิ้งก่อน
+                await tx.userSkill.deleteMany({
+                    where: { candidateProfileId: req.user.profileId },
+                });
+
+                // 3. เพิ่ม Skill ที่ส่งมาใหม่ทั้งหมด
+                for (const userSkill of skills) { // สมมติว่า skills คือ [{name: 'React', rating: 5}]
+                    // ตรวจสอบว่ามีชื่อ skill ส่งมาจริง
+                    if (userSkill && userSkill.name) {
+                        const skillRecord = await tx.skill.upsert({
+                            where: { name: userSkill.name },
+                            update: {},
+                            create: { name: userSkill.name },
+                        });
+
+                        await tx.userSkill.create({
+                            data: {
+                                candidateProfileId: req.user.profileId,
+                                skillId: skillRecord.id,
+                                rating: parseInt(userSkill.rating, 10) || 1, // ใส่ค่า rating เริ่มต้นหากไม่มี
+                            },
+                        });
+                    }
+                }
+            });
+
+            // 4. ดึงข้อมูลโปรไฟล์ล่าสุดพร้อม Skill ทั้งหมดเพื่อส่งกลับไป
+            const finalProfile = await prisma.candidateProfile.findUnique({
+                where: { id: req.user.profileId },
+                include: {
+                    skills: {
+                        include: {
+                            skill: true,
+                        },
+                    },
+                },
+            });
+            res.json(finalProfile);
+
+        } catch (error) {
+            console.error("Error updating skills:", error);
+            res.status(500).send("Server Error");
+        }
+    }
 );
 
 // @route   GET /api/profiles/company/me (Get current logged-in company's profile)

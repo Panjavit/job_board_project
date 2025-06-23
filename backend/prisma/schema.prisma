@@ -37,12 +37,18 @@ model CandidateProfile {
   youtubeIntroLink  String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
+  nickname          String?   // เพิ่ม: ชื่อเล่น
+  gender            String?   // เพิ่ม: เพศ
+  dateOfBirth       DateTime? // เพิ่ม: วันเกิด (เก็บเป็น DateTime)
+  phoneNumber       String?   // เพิ่ม: เบอร์โทรศัพท์
 
   // ความสัมพันธ์
   user      User          @relation(fields: [userId], references: [id])
   userId    String        @unique
   skills    UserSkill[]
   interests Interaction[] @relation("StudentInteractions")
+  workHistory WorkHistory[] // นักศึกษาหนึ่งคนมีได้หลายประวัติการทำงาน
+  licenses    License[]     // นักศึกษาหนึ่งคนมีได้หลายใบอนุญาต
 }
 
 model CompanyProfile {
@@ -86,6 +92,34 @@ model Interaction {
   companyProfileId String
   student          CandidateProfile @relation("StudentInteractions", fields: [studentProfileId], references: [id])
   studentProfileId String
+}
+
+//เพิ่ม Model ใหม่สำหรับเก็บประวัติการทำงาน
+model WorkHistory {
+  id          String   @id @default(cuid())
+  companyName String   // ชื่อบริษัท
+  position    String   // ตำแหน่ง
+  startDate   DateTime // วันที่เริ่มงาน
+  endDate     DateTime? // วันที่สิ้นสุด (อาจจะยังทำอยู่)
+  description String?  // รายละเอียดงาน
+
+  //ความสัมพันธ์: ประวัตินี้เป็นของนักศึกษาคนไหน
+  candidate   CandidateProfile @relation(fields: [candidateProfileId], references: [id])
+  candidateProfileId String
+}
+
+model License {
+  id                  String   @id @default(cuid())
+  name                String   // ชื่อใบอนุญาต/ใบรับรอง
+  issuingOrganization String   // องค์กรที่ออกให้
+  issueDate           DateTime // วันที่ออก
+  credentialURL       String?  // ลิงก์สำหรับตรวจสอบ (ถ้ามี)
+
+  imageUrl            String?  // <-- เพิ่มฟิลด์นี้สำหรับเก็บ URL ของรูปภาพ
+
+  // ความสัมพันธ์
+  candidate           CandidateProfile @relation(fields: [candidateProfileId], references: [id])
+  candidateProfileId  String
 }
 
 enum Role {

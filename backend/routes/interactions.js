@@ -50,7 +50,7 @@ router.post("/interest/:studentId", protect, authorize("COMPANY"), async(req,res
           from: `"IdeaTrade Jobs" <${process.env.OAUTH_SENDER_EMAIL}>`,
           to: studentProfile.contactEmail,
           subject: `[IdeaTrade] บริษัท ${companyProfile.companyName} สนใจในโปรไฟล์ของคุณ`,
-          text: contactInstructions, // ส่งเป็นข้อความธรรมดา
+          text: contactInstructions, //ส่งเป็นข้อความธรรมดา
         });
         console.log(`Plain text email sent successfully to ${studentProfile.contactEmail}`);
       } catch (emailError) {
