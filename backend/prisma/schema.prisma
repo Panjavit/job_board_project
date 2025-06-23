@@ -27,20 +27,25 @@ model User {
 model CandidateProfile {
   id                String        @id @default(cuid())
   studentCode       String?       @unique
-  fullName          String
-  contactEmail      String
-  desiredPosition   String?
+  fullName          String    // เทียบเท่า name
+  contactEmail      String    // เทียบเท่า email
+  phoneNumber       String?   // เทียบเท่า phone
+  desiredPosition   String?   // เทียบเท่า position
+  bio               String?   @db.Text // เทียบเท่า about
   lineUserId        String?
   major             String?       // (แก้ไข) เพิ่มฟิลด์สำหรับเก็บ "สาขาวิชา"
   studyYear         Int?          // (แก้ไข) เพิ่มฟิลด์สำหรับเก็บ "ชั้นปี" เป็นตัวเลข
-  bio               String?
-  youtubeIntroLink  String?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   nickname          String?   // เพิ่ม: ชื่อเล่น
   gender            String?   // เพิ่ม: เพศ
   dateOfBirth       DateTime? // เพิ่ม: วันเกิด (เก็บเป็น DateTime)
-  phoneNumber       String?   // เพิ่ม: เบอร์โทรศัพท์
+  profileImageUrl   String?   // เพิ่ม: สำหรับ profileImage
+  videoUrl          String?   // เปลี่ยนชื่อจาก youtubeIntroLink
+  experience        String?   @db.Text // เพิ่ม: สำหรับ experience (ข้อความสรุป)
+  education         String?   @db.Text // เพิ่ม: สำหรับ education (ข้อความสรุป)
+  projects          String?   @db.Text // เพิ่ม: สำหรับ projects
+  achievements      String?   @db.Text // เพิ่ม: สำหรับ achievements
 
   // ความสัมพันธ์
   user      User          @relation(fields: [userId], references: [id])
@@ -48,7 +53,8 @@ model CandidateProfile {
   skills    UserSkill[]
   interests Interaction[] @relation("StudentInteractions")
   workHistory WorkHistory[] // นักศึกษาหนึ่งคนมีได้หลายประวัติการทำงาน
-  licenses    License[]     // นักศึกษาหนึ่งคนมีได้หลายใบอนุญาต
+  certificateFiles CertificateFile[]
+  contactFiles     ContactFile[]
 }
 
 model CompanyProfile {
@@ -108,18 +114,24 @@ model WorkHistory {
   candidateProfileId String
 }
 
-model License {
-  id                  String   @id @default(cuid())
-  name                String   // ชื่อใบอนุญาต/ใบรับรอง
-  issuingOrganization String   // องค์กรที่ออกให้
-  issueDate           DateTime // วันที่ออก
-  credentialURL       String?  // ลิงก์สำหรับตรวจสอบ (ถ้ามี)
+// โมเดลสำหรับเก็บไฟล์ Certificate
+  model CertificateFile {
+  id                 String           @id @default(cuid())
+  name               String
+  url                String
+  type               String
+  candidate          CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  candidateProfileId String
+}
 
-  imageUrl            String?  // <-- เพิ่มฟิลด์นี้สำหรับเก็บ URL ของรูปภาพ
-
-  // ความสัมพันธ์
-  candidate           CandidateProfile @relation(fields: [candidateProfileId], references: [id])
-  candidateProfileId  String
+// โมเดลสำหรับเก็บไฟล์ Contact (เช่น Resume)
+  model ContactFile {
+  id                 String           @id @default(cuid())
+  name               String
+  url                String
+  type               String
+  candidate          CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  candidateProfileId String
 }
 
 enum Role {
