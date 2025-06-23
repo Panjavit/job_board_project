@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+@import "tailwindcss";
+
+@theme {
+    --color-light: #e6f6f4;
+    --color-light-hover: #d9f2ef;
+    --color-light-active: #b0e4dd;
+    --color-normal: #00a991;
+    --color-normal-hover: #009883;
+    --color-normal-active: #008774;
+    --color-dark: #007f6d;
+    --color-dark-hover: #006557;
+    --color-dark-active: #004c41;
+    --color-darker: #003b33;
+
+    --font-noto-sans: "Rubik", "Noto Sans Thai", sans-serif;
+}
