@@ -8,6 +8,8 @@ import {
     SkillsCard,
     FileUploadCard,
     VideoUploadCard,
+    Sidebar,
+    PersonalInfoForm
 } from '../components';
 
 interface CandidateProfile {
@@ -60,6 +62,9 @@ const ProfilePage: React.FC = () => {
     const [profile, setProfile] = useState<CandidateProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const { user, isAuthenticated } = useAuth();
+    const [isPersonalInfoFormOpen, setIsPersonalInfoFormOpen] = useState(false);
+    const [isExperienceFormOpen, setIsExperienceFormOpen] = useState(false);
+    const [isEducationFormOpen, setIsEducationFormOpen] = useState(false);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -121,9 +126,7 @@ const ProfilePage: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             <ProfileHeader
-                user={userDataForHeader}
-                completionRate={50}
-                onUpdateProfile={handleProfileUpdate as (profileData: Partial<UserDataForHeader>) => void}
+                user={userDataForHeader} completionRate={50} onUpdateProfile={() => setIsPersonalInfoFormOpen(true)}
             />
 
             <div className="max-w-7xl mx-auto px-6 py-6">
@@ -131,21 +134,21 @@ const ProfilePage: React.FC = () => {
                     <div className="space-y-6">
                         <ProfileCard
                             title="ข้อมูลส่วนตัวของคุณ"
-                            content={profile.bio || "คลิก 'แก้ไข' เพื่อเพิ่มข้อมูลส่วนตัว"}
-                            onEdit={() => { /* Logic to open edit modal */ }}
-                            cardId="about"
+                            content={profile.bio }
+                            placeholder= "คลิก 'เพิ่มข้อมูล' เพื่อเพิ่มข้อมูลส่วนตัว"
+                            onEditClick={() => setIsPersonalInfoFormOpen(true)}
                         />
                         <ProfileCard
                             title="ประสบการณ์การทำงานของคุณ"
-                            content={profile.experience || "คลิก 'แก้ไข' เพื่อเพิ่มประสบการณ์ทำงาน"}
-                            onEdit={() => { /* Logic to open edit modal */ }}
-                            cardId="experience"
+                            content={profile.experience}
+                            placeholder= "คลิก 'เพิ่มข้อมูล' เพื่อเพิ่มประสบการณ์ทำงาน"
+                            onEditClick={() => { /* Logic to open edit modal */ }}
                         />
                         <ProfileCard
                             title="ข้อมูลการศึกษา"
-                            content={profile.education || "คลิก 'แก้ไข' เพื่อเพิ่มข้อมูลการศึกษา"}
-                            onEdit={() => { /* Logic to open edit modal */ }}
-                            cardId="education"
+                            content={profile.education}
+                            placeholder= "คลิก 'เพิ่มข้อมูล' เพื่อเพิ่มข้อมูลการศึกษา"
+                            onEditClick={() => { /* Logic to open edit modal */ }}
                         />
                         <FileUploadCard
                             title="รางวัลหรือใบประกาศนียบัตร"
@@ -172,19 +175,26 @@ const ProfilePage: React.FC = () => {
                         />
                         <ProfileCard
                             title="ผลงาน/โปรเจค"
-                            content={profile.projects || "คลิก 'แก้ไข' เพื่อเพิ่มผลงาน"}
-                            onEdit={() => { /* Logic to open edit modal */ }}
-                            cardId="projects"
+                            content={profile.projects}
+                            placeholder="คลิก 'เพิ่มข้อมูล' เพื่อเพิ่มผลงาน"
+                            onEditClick={() => { /* Logic to open edit modal */ }}
                         />
                         <ProfileCard
                             title="รายละเอียดเพิ่มเติม"
-                            content={profile.achievements || "คลิก 'แก้ไข' เพื่อเพิ่มรายละเอียด"}
-                            onEdit={() => { /* Logic to open edit modal */ }}
-                            cardId="achievements"
+                            content={profile.achievements}
+                            placeholder= "คลิก 'เพิ่มข้อมูล' เพื่อเพิ่มรายละเอียด"
+                            onEditClick={() => { /* Logic to open edit modal */ }}
                         />
                     </div>
                 </div>
             </div>
+             <Sidebar openSidebar={isPersonalInfoFormOpen} setOpenSidebar={setIsPersonalInfoFormOpen}>
+                <PersonalInfoForm
+                    currentProfile={profile}
+                    onUpdate={handleProfileUpdate}
+                    onClose={() => setIsPersonalInfoFormOpen(false)}
+                />
+            </Sidebar>
         </div>
     );
 };
