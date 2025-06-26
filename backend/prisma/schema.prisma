@@ -42,6 +42,7 @@ model CandidateProfile {
   dateOfBirth       DateTime? // เพิ่ม: วันเกิด (เก็บเป็น DateTime)
   profileImageUrl   String?   // เพิ่ม: สำหรับ profileImage
   videoUrl          String?   // เปลี่ยนชื่อจาก youtubeIntroLink
+  videoDescription  String?
   experience        String?   @db.Text // เพิ่ม: สำหรับ experience (ข้อความสรุป)
   education         String?   @db.Text // เพิ่ม: สำหรับ education (ข้อความสรุป)
   projects          String?   @db.Text // เพิ่ม: สำหรับ projects
@@ -55,6 +56,7 @@ model CandidateProfile {
   workHistory WorkHistory[] // นักศึกษาหนึ่งคนมีได้หลายประวัติการทำงาน
   certificateFiles CertificateFile[]
   contactFiles     ContactFile[]
+  internshipApplications InternshipApplication[]
 }
 
 model CompanyProfile {
@@ -69,6 +71,7 @@ model CompanyProfile {
   user      User          @relation(fields: [userId], references: [id])
   userId    String        @unique
   interests Interaction[] @relation("CompanyInteractions")
+  internshipApplications InternshipApplication[]
 }
 
 model Skill {
@@ -120,6 +123,7 @@ model WorkHistory {
   name               String
   url                String
   type               String
+  description        String?
   candidate          CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
   candidateProfileId String
 }
@@ -132,6 +136,35 @@ model WorkHistory {
   type               String
   candidate          CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
   candidateProfileId String
+}
+
+model InternshipApplication {
+  id                 String   @id @default(cuid())
+  positionOfInterest String
+  universityName     String
+  startDate          DateTime
+  endDate            DateTime
+  reason             String   @db.Text
+  status             ApplicationStatus @default(PENDING) // สถานะใบสมัคร
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // ความสัมพันธ์: ใบสมัครนี้เป็นของใคร และสมัครไปที่บริษัทไหน
+  candidate          CandidateProfile @relation(fields: [candidateProfileId], references: [id])
+  candidateProfileId String
+
+  company            CompanyProfile   @relation(fields: [companyProfileId], references: [id])
+  companyProfileId   String
+
+  @@unique([candidateProfileId, companyProfileId]) // จำกัดให้ 1 คนสมัคร 1 บริษัทได้ครั้งเดียว
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWED
+  ACCEPTED
+  REJECTED
 }
 
 enum Role {
