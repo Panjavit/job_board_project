@@ -14,7 +14,12 @@ router.get('/', protect, authorize("COMPANY"), async (req, res) => {
         const skip = (pageNum - 1) * limitNum;
 
         // สร้างเงื่อนไข 
-        const where = {};
+        const where = {
+            //ค้นหาเฉพาะ CandidateProfile ที่มี InternshipApplication อย่างน้อย 1 รายการ
+            internshipApplications: {
+                some: {}, //ใส่ object ว่างๆ ใน some หมายถึง "ขอแค่มีอย่างน้อยหนึ่งรายการ"
+            },
+        };
 
         if (position) {
             where.desiredPosition = {
@@ -47,7 +52,6 @@ router.get('/', protect, authorize("COMPANY"), async (req, res) => {
         if(studentCode){
             where.studentCode = {
                 equals: studentCode,
-                mode: 'insensitive' //สำหรับการค้นหาที่ไม่สนตัวพิมพ์เล็ก/ใหญ่
             }
         }
 
@@ -55,13 +59,32 @@ router.get('/', protect, authorize("COMPANY"), async (req, res) => {
             where,
             skip,
             take: limitNum,
-            include: {
+            select: {
+                id: true,
+                studentCode: true,
+                fullName: true,
+                desiredPosition: true,
+                education: true,
+                studyYear: true,
+                major: true,
+                updatedAt: true,
+                profileImageUrl: true,
                 skills: {
-                    orderBy: { rating: 'desc' },
-                    include: {
-                        skill: true,
+                    select: {
+                        skill: {
+                            select: {
+                                name: true
+                            }
+                        }
                     }
-                }
+                },
+                internshipApplications: {
+                    select: {
+                        internshipType: true,
+                        startDate: true,
+                        endDate: true
+                    }
+                },
             },
             orderBy: {
                 updatedAt: "desc",

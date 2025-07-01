@@ -37,7 +37,7 @@ const VideoSide: React.FC<VideoSideProps> = ({ currentProfile, onUpdate, onClose
 
     return (
         <form onSubmit={handleSubmit} className="h-full w-full flex flex-col">
-            <h1 className="text-2xl font-bold">เพิ่มวิดีโอแนะนำตัว</h1>
+            <h1 className="text-2xl font-bold">เพิ่มวิดีโอแนะนำตัวเอง 5-10 นาที</h1>
             <li>ไปที่หน้าวิดีโอใน YouTube</li>
                 <li>คลิกปุ่ม "แชร์" (Share)</li>
                 <li>เลือก "ฝัง" (Embed)</li>

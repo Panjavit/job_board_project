@@ -34,6 +34,7 @@ import { FaUser, FaGraduationCap, FaBriefcase, FaSearch } from "react-icons/fa";
             <option>ประเภทงาน</option>
             <option>ประจำ</option>
             <option>พาร์ทไทม์</option>
+            <option>ฝึกงาน</option>
           </select>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
@@ -18,6 +18,7 @@ import CertificateSide from '../components/CertificateSide';
 import VideoSide from '../components/VideoSide';
 import ResumeSide from '../components/ResumeSide';
 import InternshipApplicationSide from '../components/InternshipApplicationSide';
+import SkillsSide from '../components/SkillsSide';
 
 interface CandidateProfile {
     id: string;
@@ -80,34 +81,65 @@ const ProfilePage: React.FC = () => {
     const [isVideoFormOpen, setIsVideoFormOpen] = useState(false);
     const [isResumeFormOpen, setIsResumeFormOpen] = useState(false);
     const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
+    const [isSkillsFormOpen, setIsSkillsFormOpen] = useState(false);
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            if (isAuthenticated && user?.role === 'CANDIDATE') {
-                setIsLoading(true);
-                try {
-                    const response = await api.get<CandidateProfile>(
-                        '/profiles/candidate/me'
-                    );
-                    setProfile(response.data);
-                } catch (error) {
-                    console.error('Failed to fetch profile:', error);
-                } finally {
-                    setIsLoading(false);
-                }
-            } else {
+    const fetchProfile = async () => {
+        if (isAuthenticated && user?.role === 'CANDIDATE') {
+            setIsLoading(true);
+            try {
+                const response = await api.get<CandidateProfile>(
+                    '/profiles/candidate/me'
+                );
+                setProfile(response.data);
+            } catch (error) {
+                console.error('Failed to fetch profile:', error);
+            } finally {
                 setIsLoading(false);
             }
-        };
+        } else {
+            setIsLoading(false);
+        }
+    };
 
-        fetchProfile();
+    useEffect(() => {
+        fetchProfile(); //ให้ useEffect เรียกใช้ฟังก์ชันที่เราย้ายออกมา
     }, [isAuthenticated, user]);
+
+    const calculateCompletion = (p: CandidateProfile | null): number => {
+        if (!p) return 0;
+
+        //กำหนดรายการที่ต้องการตรวจสอบ 7 รายการ
+        const completionChecks = [
+            !!p.profileImageUrl, //มีรูปโปรไฟล์หรือไม่
+            !!p.bio, //มีข้อมูลส่วนตัว (bio) หรือไม่
+            p.workHistory && p.workHistory.length > 0, //มีประวัติการทำงานหรือไม่
+            !!p.major || !!p.studyYear, //มีข้อมูลการศึกษา (สาขา หรือ ชั้นปี) หรือไม่
+            p.certificateFiles && p.certificateFiles.length > 0, //มีใบประกาศหรือไม่
+            !!p.videoUrl, //มีวิดีโอแนะนำตัวหรือไม่
+            p.skills && p.skills.length > 0, //มีทักษะหรือไม่
+        ];
+
+        //นับจำนวนรายการที่กรอกแล้ว (true)
+        const completedCount = completionChecks.filter(Boolean).length;
+
+        //คำนวณเป็นเปอร์เซ็นต์ (ปัดเศษเป็นจำนวนเต็ม)
+        const percentage = Math.round(
+            (completedCount / completionChecks.length) * 100
+        );
+
+        return percentage;
+    };
 
     const handleProfileUpdate = (newProfileData: CandidateProfile) => {
         //แทนที่ state profile ทั้งหมดด้วยข้อมูลใหม่ที่ได้รับจาก API โดยตรง
         console.log('Received new profile data to update:', newProfileData);
         setProfile(newProfileData);
     };
+
+    const completionRate = useMemo(
+        () => calculateCompletion(profile),
+        [profile]
+    );
 
     const handleSkillsUpdate = (newSkills: Skill[]) => {
         console.log('Updating skills:', newSkills);
@@ -144,6 +176,33 @@ const ProfilePage: React.FC = () => {
         } catch (error) {
             console.error('Failed to delete certificate file:', error);
             alert('เกิดข้อผิดพลาดในการลบไฟล์');
+        }
+    };
+
+    const handleHeaderSave = async (headerData: {
+        name: string;
+        phone: string;
+    }) => {
+        try {
+            //เตรียมข้อมูลที่จะส่งไปอัปเดต
+            const payload = {
+                fullName: headerData.name,
+                phoneNumber: headerData.phone,
+            };
+
+            //ส่ง PATCH request เพื่ออัปเดตข้อมูล
+            await api.patch('/profiles/candidate/me/personal-info', payload);
+
+            //ดึงข้อมูลโปรไฟล์ฉบับเต็มล่าสุดมาอัปเดตหน้าเว็บ
+            const response = await api.get<CandidateProfile>(
+                '/profiles/candidate/me'
+            );
+            setProfile(response.data);
+
+            alert('อัปเดตข้อมูลสำเร็จ!');
+        } catch (error) {
+            console.error('Failed to save header data:', error);
+            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 
@@ -210,9 +269,9 @@ const ProfilePage: React.FC = () => {
         position: profile.desiredPosition || 'ยังไม่ได้ระบุตำแหน่ง',
         email: profile.contactEmail,
         phone: profile.phoneNumber || 'ยังไม่ได้ระบุเบอร์โทร',
-        profileImage:
-            profile.profileImageUrl ||
-            'https://images.unsplash.com/photo-1494790108755-2616b612b567?w=150&h=150&fit=crop&crop=face',
+        profileImage: profile.profileImageUrl
+            ? `http://localhost:5001${profile.profileImageUrl}`
+            : 'https://images.unsplash.com/photo-1494790108755-2616b612b567?w=150&h=150&fit=crop&crop=face',
         about: profile.bio || '',
         experience: profile.experience || '',
         education: profile.education || '',
@@ -227,12 +286,27 @@ const ProfilePage: React.FC = () => {
         contactFiles: [], // Placeholder
     };
 
+    const getInternshipTypeText = (type: string) => {
+        switch (type) {
+            case 'FULL_TIME':
+                return 'พนักงานประจำ (Full-time)';
+            case 'PART_TIME':
+                return 'พาร์ทไทม์ (Part-time)';
+            case 'INTERNSHIP':
+                return 'ฝึกงาน (Internship)';
+            default:
+                return 'ไม่ระบุ';
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50">
             <ProfileHeader
                 user={userDataForHeader}
-                completionRate={50}
-                onUpdateProfile={() => setIsPersonalInfoFormOpen(true)}
+                completionRate={completionRate} // << ใช้ค่าที่คำนวณใหม่จาก useMemo
+                onEditClick={() => setIsPersonalInfoFormOpen(true)}
+                onSave={handleHeaderSave}
+                onProfileUpdate={fetchProfile}
             />
 
             <div className="mx-auto max-w-7xl px-6 py-6">
@@ -476,10 +550,38 @@ const ProfilePage: React.FC = () => {
                                     </div>
                                 )}
                         </ProfileCard>
-                        <SkillsCard
-                            skills={userDataForHeader.customSkills}
-                            onUpdateSkills={handleSkillsUpdate}
-                        />
+                        <ProfileCard
+                            title="ทักษะ"
+                            placeholder="เพิ่มทักษะที่จำเป็นสำหรับตำแหน่งงานที่คุณสนใจ (กรอกรายละเอียดฝึกงานก่อนเพื่อเพิ่มตำแหน่งงาน)"
+                            onEditClick={() => setIsSkillsFormOpen(true)}
+                        >
+                            {profile.skills && profile.skills.length > 0 ? (
+                                <div className="space-y-3">
+    {[...profile.skills] // สร้างสำเนาของ array
+        .sort((a, b) => b.rating - a.rating) // เรียงลำดับจากมากไปน้อย (descending)
+        .map((s: any) => ( // แสดงผลข้อมูลที่เรียงลำดับแล้ว
+            <div key={s.skill.name}>
+                <div className="mb-1 flex items-center justify-between text-sm">
+                    <span className="font-semibold text-gray-700">
+                        {s.skill.name}
+                    </span>
+                    <span className="font-bold text-teal-600">
+                        {s.rating}/10
+                    </span>
+                </div>
+                <div className="h-2.5 w-full rounded-full bg-gray-200">
+                    <div
+                        className="h-2.5 rounded-full bg-teal-500"
+                        style={{
+                            width: `${s.rating * 10}%`,
+                        }}
+                    ></div>
+                </div>
+            </div>
+        ))}
+</div>
+                            ) : null}
+                        </ProfileCard>
                         <ProfileCard
                             title="รายละเอียดการฝึกงาน"
                             placeholder="คลิก 'เพิ่มข้อมูล' เพื่อกรอกรายละเอียดการสมัครฝึกงาน"
@@ -498,6 +600,14 @@ const ProfilePage: React.FC = () => {
                                                         ตำแหน่งงานที่สนใจ :
                                                     </span>{' '}
                                                     {app.positionOfInterest}
+                                                </p>
+                                                <p>
+                                                    <span className="font-semibold">
+                                                        รูปแบบ :
+                                                    </span>{' '}
+                                                    {getInternshipTypeText(
+                                                        app.internshipType
+                                                    )}
                                                 </p>
                                                 <p>
                                                     <span className="font-semibold">
@@ -612,6 +722,20 @@ const ProfilePage: React.FC = () => {
                     }
                     onUpdate={handleProfileUpdate}
                     onClose={() => setIsApplicationFormOpen(false)}
+                />
+            </Sidebar>
+            <Sidebar
+                openSidebar={isSkillsFormOpen}
+                setOpenSidebar={setIsSkillsFormOpen}
+            >
+                <SkillsSide
+                    currentSkills={profile.skills.map(s => ({
+                        name: s.skill.name,
+                        level: s.rating,
+                    }))}
+                    desiredPosition={profile.desiredPosition}
+                    onUpdate={handleProfileUpdate}
+                    onClose={() => setIsSkillsFormOpen(false)}
                 />
             </Sidebar>
         </div>

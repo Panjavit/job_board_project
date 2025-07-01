@@ -1,7 +1,8 @@
 import type { Dispatch, SetStateAction } from 'react';
 
 interface CardType {
-    id: string;
+    studentId: string;
+    studentCode: string;
     position: string;
     period: string;
     type: string;
@@ -9,11 +10,13 @@ interface CardType {
     department: string;
     skill: string[];
     createdAt: string;
+    profileImageUrl: string | null;
     setShowPopup: Dispatch<SetStateAction<boolean>>;
 }
 
 const Card = ({
-    id,
+    studentId,
+    studentCode,
     position,
     period,
     type,
@@ -21,21 +24,32 @@ const Card = ({
     department,
     skill,
     createdAt,
+    profileImageUrl,
     setShowPopup,
 }: CardType) => {
     return (
         
-        <div className="bg-[#f0f4f4] h-88 w-[30%] min-w-[500px] cursor-pointer rounded-xl p-8 shadow-xl transition-all duration-300 hover:scale-[102%]">
+        <div className="bg-[#f0f4f4] flex flex-col h-full cursor-pointer rounded-xl p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
             <div className="flex w-full items-center justify-between text-sm">
                 <p>กำลังมองหางาน</p>
                 <p>{createdAt}</p>
             </div>
             <div className="mt-4 flex h-fit w-full gap-8">
-                <div className="third flex aspect-square h-14 items-center justify-center rounded-full text-2xl text-white">
-                    <i className="fa-regular fa-face-smile"></i>
+                <div className="flex-shrink-0 bg-gray-200 w-14 h-14 flex items-center justify-center rounded-full text-2xl overflow-hidden">
+                    {profileImageUrl ? (
+                        //ถ้ามีURLของรูปภาพ ให้แสดงแท็ก <img>
+                        <img
+                            src={`http://localhost:5001${profileImageUrl}`}
+                            alt={studentCode}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        // ถ้าไม่มีให้แสดงไอคอนรูปยิ้ม
+                        <i className="fa-regular fa-face-smile text-gray-500"></i>
+                    )}
                 </div>
                 <div className="flex flex-col gap-2">
-                    <p>{id}</p>
+                    <p>{studentCode}</p>
                     <p className="font-bold">{position}</p>
                 </div>
             </div>

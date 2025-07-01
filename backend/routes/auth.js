@@ -44,6 +44,10 @@ router.post('/register', async (req, res) => { //req (Request),res (Response)  �
                 companyProfile: role.toLowerCase() === 'company' ? {
                     create: { companyName: name, contactInstructions: `ติดต่อผ่าน ${email}` }
                 } : undefined,
+            },
+            include: {
+                candidateProfile: true,
+                companyProfile: true
             }
         });
 

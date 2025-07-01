@@ -14,7 +14,8 @@ const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ c
         universityName: '',
         startDate: '',
         endDate: '',
-        reason: ''
+        reason: '',
+        internshipType: 'INTERNSHIP',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -27,11 +28,12 @@ const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ c
                 startDate: currentApplication.startDate ? new Date(currentApplication.startDate).toISOString().split('T')[0] : '',
                 endDate: currentApplication.endDate ? new Date(currentApplication.endDate).toISOString().split('T')[0] : '',
                 reason: currentApplication.reason || '',
+                internshipType: currentApplication.internshipType || 'INTERNSHIP',
             });
         }
     }, [currentApplication]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
@@ -61,6 +63,21 @@ const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ c
                 <div>
                     <label htmlFor="positionOfInterest" className="font-bold">ตำแหน่งงานที่สนใจ</label>
                     <input type="text" name="positionOfInterest" value={formData.positionOfInterest} onChange={handleChange} required className="mt-2 w-full rounded-lg border-2 border-stone-400 px-4 py-3"/>
+                </div>
+                <div>
+                    <label htmlFor="internshipType" className="font-bold">รูปแบบการฝึกงาน</label>
+                    <select
+                        name="internshipType"
+                        id="internshipType"
+                        value={formData.internshipType}
+                        onChange={handleChange}
+                        required
+                        className="mt-2 w-full rounded-lg border-2 border-stone-400 px-4 py-3 bg-white"
+                    >
+                        <option value="INTERNSHIP">ฝึกงาน (Internship)</option>
+                        <option value="FULL_TIME">พนักงานประจำ (Full-time)</option>
+                        <option value="PART_TIME">พาร์ทไทม์ (Part-time)</option>
+                    </select>
                 </div>
                 <div>
                     <label htmlFor="universityName" className="font-bold">ชื่อมหาวิทยาลัย / สถานศึกษา</label>

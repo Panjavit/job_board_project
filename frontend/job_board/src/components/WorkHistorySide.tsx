@@ -32,10 +32,18 @@ const WorkHistorySide: React.FC<WorkHistorySideProps> = ({ workHistoryItem, onUp
             setFormData({
                 companyName: workHistoryItem.companyName || '',
                 position: workHistoryItem.position || '',
-                // แปลง Format วันที่ให้ใช้กับ input type="date" ได้
+                //แปลง Format วันที่ให้ใช้กับ input type="date" ได้
                 startDate: workHistoryItem.startDate ? new Date(workHistoryItem.startDate).toISOString().split('T')[0] : '',
                 endDate: workHistoryItem.endDate ? new Date(workHistoryItem.endDate).toISOString().split('T')[0] : '',
                 description: workHistoryItem.description || '',
+            });
+        }else{
+            setFormData({
+                companyName: '',
+                position: '',
+                startDate: '',
+                endDate: '',
+                description: ''
             });
         }
     }, [workHistoryItem, isEditing]);

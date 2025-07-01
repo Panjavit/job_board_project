@@ -10,6 +10,7 @@ import EmployeeLoginPage from './pages/EmployeeLoginPage.tsx';
 import EmployeeRegisterPage from './pages/EmployeeRegisterPage.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import CompanyPage from './pages/CompanyPage.tsx';
 
 const router = createBrowserRouter([
     {
@@ -27,6 +28,14 @@ const router = createBrowserRouter([
                 <ProfilePage />
             </MainLayout>
         ),
+    },
+    {
+        path: '/company-profile',
+        element: (
+            <MainLayout>
+                <CompanyPage />
+            </MainLayout>
+        )
     },
     {
         path: '/about',

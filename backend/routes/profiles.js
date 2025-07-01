@@ -1,6 +1,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import { protect, authorize } from "../middleware/auth.js";
+import upload from "../middleware/upload.js"
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -52,6 +53,7 @@ router.patch(
   async (req, res) => {
     try {
       //รับข้อมูลทั้งหมดจาก req.body รวมถึงฟิลด์ใหม่
+      const dataToUpdate = {};
       const {
         fullName,
         contactEmail,
@@ -63,29 +65,28 @@ router.patch(
         dateOfBirth,
         phoneNumber,
         education,
-        videoUrl,         
+        videoUrl,
         videoDescription,
       } = req.body;
 
-      //อัปเดตข้อมูลลงในฐานข้อมูล
+      // ตรวจสอบแต่ละฟิลด์ ถ้ามีค่าส่งมาถึงจะเพิ่มเข้าไปใน object ที่จะใช้อัปเดต
+      if (fullName !== undefined) dataToUpdate.fullName = fullName;
+      if (contactEmail !== undefined) dataToUpdate.contactEmail = contactEmail;
+      if (major !== undefined) dataToUpdate.major = major;
+      if (studyYear !== undefined) dataToUpdate.studyYear = studyYear ? parseInt(studyYear, 10) : null;
+      if (bio !== undefined) dataToUpdate.bio = bio;
+      if (nickname !== undefined) dataToUpdate.nickname = nickname;
+      if (gender !== undefined) dataToUpdate.gender = gender;
+      if (dateOfBirth !== undefined) dataToUpdate.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+      if (phoneNumber !== undefined) dataToUpdate.phoneNumber = phoneNumber;
+      if (education !== undefined) dataToUpdate.education = education;
+      if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
+      if (videoDescription !== undefined) dataToUpdate.videoDescription = videoDescription;
+
+      // ใช้ dataToUpdate ที่สร้างขึ้นมาใหม่ในการอัปเดต
       const updatedProfile = await prisma.candidateProfile.update({
         where: { id: req.user.profileId },
-        data: {
-          fullName,
-          contactEmail,
-          major,
-          studyYear: studyYear ? parseInt(studyYear, 10) : null,
-          bio,
-          //เพิ่มฟิลด์ใหม่เข้าไปใน data object
-          nickname,
-          gender,
-          // แปลงค่าวันที่ให้ถูกต้องก่อนบันทึก
-          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-          phoneNumber,
-          education,
-          videoUrl,
-          videoDescription,
-        },
+        data: dataToUpdate,
       });
 
       //ส่งข้อมูลที่อัปเดตแล้วกลับไป
@@ -112,15 +113,15 @@ router.put(
 
     try {
       await prisma.$transaction(async (tx) => {
-        // 2. ล้าง Skill เก่าทั้งหมดของ user คนนี้ทิ้งก่อน
+        //ล้าง Skill เก่าทั้งหมดของ user คนนี้ทิ้งก่อน
         await tx.userSkill.deleteMany({
           where: { candidateProfileId: req.user.profileId },
         });
 
-        // 3. เพิ่ม Skill ที่ส่งมาใหม่ทั้งหมด
+        //เพิ่ม Skill ที่ส่งมาใหม่ทั้งหมด
         for (const userSkill of skills) {
-          // สมมติว่า skills คือ [{name: 'React', rating: 5}]
-          // ตรวจสอบว่ามีชื่อ skill ส่งมาจริง
+          //สมมติว่า skills คือ [{name: 'React', rating: 5}]
+          //ตรวจสอบว่ามีชื่อ skill ส่งมาจริง
           if (userSkill && userSkill.name) {
             const skillRecord = await tx.skill.upsert({
               where: { name: userSkill.name },
@@ -139,7 +140,7 @@ router.put(
         }
       });
 
-      // 4. ดึงข้อมูลโปรไฟล์ล่าสุดพร้อม Skill ทั้งหมดเพื่อส่งกลับไป
+      //ดึงข้อมูลโปรไฟล์ล่าสุดพร้อม Skill ทั้งหมดเพื่อส่งกลับไป
       const finalProfile = await prisma.candidateProfile.findUnique({
         where: { id: req.user.profileId },
         include: {
@@ -148,6 +149,14 @@ router.put(
               skill: true,
             },
           },
+           workHistory: {
+            orderBy: {
+              startDate: "desc",
+            },
+          },
+          certificateFiles: true,
+          contactFiles: true,
+          internshipApplications: true,
         },
       });
       res.json(finalProfile);
@@ -195,5 +204,40 @@ router.put("/company/me", protect, authorize("COMPANY"), async (req, res) => {
     res.status(500).send("Server Error");
   }
 });
+
+//@route  POST /api/profiles/candidate/me/avatar = Upload or update candidate profile picture
+router.post(
+  "/candidate/me/avatar",
+  protect,
+  authorize("CANDIDATE"),
+  upload.single("file"), 
+  async (req, res) => {
+    try {
+      //ตรวจสอบว่ามีไฟล์ถูกอัปโหลดมาหรือไม่
+      if (!req.file) {
+        return res.status(400).json({ message: "กรุณาแนบไฟล์รูปภาพ" });
+      }
+
+      //สร้าง URL สำหรับเข้าถึงไฟล์ที่อัปโหลด
+      const imageUrl = `/uploads/${req.file.filename}`;
+
+      //อัปเดต path ของรูปภาพลงในฐานข้อมูล
+      const updatedProfile = await prisma.candidateProfile.update({
+        where: { id: req.user.profileId },
+        data: {
+          profileImageUrl: imageUrl,
+        },
+      });
+
+      res.json({
+        message: "อัปโหลดรูปโปรไฟล์สำเร็จ",
+        profile: updatedProfile,
+      });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      res.status(500).send("Server Error");
+    }
+  }
+);
 
 export default router;

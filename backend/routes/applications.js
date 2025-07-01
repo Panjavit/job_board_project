@@ -7,12 +7,17 @@ const router = express.Router();
 
 router.post("/", protect, authorize("CANDIDATE"), async (req, res) => {
   try {
-    const { positionOfInterest, universityName, startDate, endDate, reason } =
-      req.body;
+    const {
+      positionOfInterest,
+      universityName,
+      startDate,
+      endDate,
+      reason,
+      internshipType,
+    } = req.body;
 
     //ใช้ Transaction เพื่อรัน 2 คำสั่งพร้อมกัน
     const result = await prisma.$transaction(async (tx) => {
-      // 1. อัปเดต desiredPosition ในโปรไฟล์หลักของผู้ใช้ (CandidateProfile)
       await tx.candidateProfile.update({
         where: { id: req.user.profileId },
         data: { desiredPosition: positionOfInterest },
@@ -37,6 +42,7 @@ router.post("/", protect, authorize("CANDIDATE"), async (req, res) => {
         startDate: new Date(startDate),
         endDate: new Date(endDate),
         reason,
+        internshipType,
       };
 
       let savedApplication;
@@ -46,6 +52,31 @@ router.post("/", protect, authorize("CANDIDATE"), async (req, res) => {
           data: applicationData,
         });
       } else {
+
+        const prefix = positionOfInterest
+          .replace(/[^a-zA-Z]/g, "") //เอาเฉพาะตัวอักษรภาษาอังกฤษ
+          .substring(0, 6)
+          .toUpperCase();
+
+        //นับว่ามีคนใช้ Prefix นี้ไปแล้วกี่คน
+        const count = await tx.candidateProfile.count({
+          where: {
+            studentCode: {
+              startsWith: prefix,
+            },
+          },
+        });
+
+        //สร้างรหัสใหม่โดยนำ Prefix มาต่อกับลำดับ + 1 (พร้อมเติม 0 ข้างหน้า)
+        //เช่น "BACKEN" + "01" -> "BACKEN01"
+        const studentCode = `${prefix}${String(count + 1).padStart(2, "0")}`;
+
+        //บันทึกรหัสที่สร้างขึ้นใหม่นี้ลงในโปรไฟล์ของนักศึกษา
+        await tx.candidateProfile.update({
+          where: { id: req.user.profileId },
+          data: { studentCode: studentCode },
+        });
+        
         savedApplication = await tx.internshipApplication.create({
           data: {
             ...applicationData,

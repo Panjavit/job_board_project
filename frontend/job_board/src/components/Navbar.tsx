@@ -1,55 +1,77 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
     const { pathname } = useLocation();
+    const navigate = useNavigate();
+    const { isAuthenticated, user, logout } = useAuth();
+
+    const profilePath =
+        user?.role === 'COMPANY' ? '/company-profile' : '/profile';
+
+    const handleLogout = () => {
+        logout(); //เรียกฟังก์ชัน logout จาก AuthContext
+        navigate('/auth/employee/login');
+    };
 
     return (
-        <div className=" bg-[#00a991] ">
-        <nav className="container  mx-auto max-w-[1800px] relative h-auto p-10 flex flex-col md:flex-row md:justify-between md:items-center md:h-[150px]">
-            <img
-                src="/ideatrade.svg"
-                alt="ideatrade logo"
-                className="h-31 w-41 mr-4 pr-4"
-            />
-            <div className=" flex flex-col my-5 md:flex-row mr-68 pr-68 font-semibold text-xl  ">
-                <Link
-                    to={'/'}
-                    className={`text-white p-12 hover:text-black hover:underline transition-all ${pathname === '/' && 'after:scale-100'}`}
-                >
-                    ค้นหานักศึกษาฝึกงาน
-                </Link>
-                <Link
-                    to={'/profile'}
-                    className={`text-white p-12 hover:text-black hover:underline transition-all ${pathname === '/profile' && 'after:scale-100'}`}
-                >
-                    โปรไฟล์
-                </Link>
-                <Link
-                    to={'/about'}
-                    className={`text-white p-12 hover:text-black hover:underline transition-all ${pathname === '/about' && 'after:scale-100'}`}
-                >
-                    เกี่ยวกับเรา
-                </Link>
-            </div>
-            <div className=" flex flex-col my-5 md:flex-row">
-               <div className="my-2 md:mx-5"> 
-                <Link
-                    to={'/auth/employee/login'}
-                    className="text-xl  py-3 px-6 bg-white rounded-full hover:bg-black hover:text-white transform transition-all"
-                >
-                    เข้าสู่ระบบ
-                </Link>
+        <div className="bg-[#00a991]">
+            <nav className="relative container mx-auto flex h-auto max-w-[1800px] flex-col p-10 md:h-[150px] md:flex-row md:items-center md:justify-between">
+                <img
+                    src="/ideatrade.svg"
+                    alt="ideatrade logo"
+                    className="mr-4 h-31 w-41 pr-4"
+                />
+                <div className="my-5 mr-68 flex flex-col pr-68 text-xl font-semibold md:flex-row">
+                    <Link
+                        to={'/'}
+                        className={`p-12 text-white transition-all hover:text-black hover:underline ${pathname === '/' && 'after:scale-100'}`}
+                    >
+                        ค้นหานักศึกษาฝึกงาน
+                    </Link>
+                    <Link
+                        to={profilePath} // 4. ใช้ตัวแปร profilePath ที่สร้างขึ้น
+                        className={`p-12 text-white transition-all hover:text-black hover:underline ${
+                            (pathname === '/profile' ||
+                                pathname === '/company-profile') &&
+                            'after:scale-100'
+                        }`}
+                    >
+                        โปรไฟล์
+                    </Link>
+                    <Link
+                        to={'/about'}
+                        className={`p-12 text-white transition-all hover:text-black hover:underline ${pathname === '/about' && 'after:scale-100'}`}
+                    >
+                        เกี่ยวกับเรา
+                    </Link>
                 </div>
-                <div className="my-2 md:mx-5">
-                <Link
-                    to={'/auth/employee/register'}
-                    className="text-white text-xl py-3 px-6 bg-black rounded-full hover:bg-white hover:text-black transform transition-all"
-                >
-                    บริษัทเข้าสู่ระบบ
-                </Link>
-               </div>
-            </div>
-        </nav>
+                <div className="my-5 flex flex-col md:flex-row">
+                    {isAuthenticated ? (
+                        //ถ้าล็อกอินอยู่ ให้แสดงปุ่ม Logout
+                        <div className="my-2 md:mx-5">
+                            <button
+                                onClick={handleLogout}
+                                className="transform rounded-full bg-white px-6 py-3 text-xl text-black transition-all hover:bg-red-500"
+                            >
+                                ออกจากระบบ
+                            </button>
+                        </div>
+                    ) : (
+                        //ถ้ายังไม่ล็อกอิน ให้แสดงปุ่ม Login ทั้งสอง
+                        <>
+                            <div className="my-2 md:mx-5">
+                                <Link
+                                    to={'/auth/employee/login'}
+                                    className="transform rounded-full bg-white px-6 py-3 text-xl transition-all hover:bg-black hover:text-white"
+                                >
+                                    เข้าสู่ระบบ
+                                </Link>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </nav>
         </div>
     );
 };

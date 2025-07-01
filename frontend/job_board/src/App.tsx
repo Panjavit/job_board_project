@@ -1,297 +1,74 @@
-import { useState } from 'react';
+import { useState , useEffect} from 'react';
 import Card from './components/Card';
 import FilterSection from './components/FilterSection';
 import { Filter } from "lucide-react";
-interface CardType {
+import api from './services/api';
+import { useAuth } from './context/AuthContext';
+
+interface StudentProfile {
   id: string;
-  position: string;
-  period: string;
-  type: string;
-  education: string;
-  department: string;
-  skill: string[];
-  createdAt: string;
+  studentCode: string;
+  fullName: string;
+  desiredPosition: string | null;
+  internshipApplications: {
+      internshipType: string;
+      startDate: string;
+      endDate: string;
+  }[];
+  education: string | null;
+  studyYear: number | null;
+  major: string | null;
+  skills: { skill: { name: string } }[];
+  updatedAt: string;
+  profileImageUrl: string | null;
 }
 
-const applications: CardType[] = [
-    {
-        id: 'Dev001',
-        position: 'Developer',
-        period: '25 เม.ย. 2568 - 25 ก.ค. 2568',
-        type: 'part time',
-        education: 'ปริญญาตรี',
-        department: 'วิศวะกรรมคอมพิวเตอร์',
-        skill: ['python', 'Java', 'HTML', 'CSS'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev002',
-        position: 'Frontend Developer',
-        period: '1 มิ.ย. 2568 - 1 ก.ย. 2568',
-        type: 'internship',
-        education: 'ปริญญาตรี',
-        department: 'เทคโนโลยีสารสนเทศ',
-        skill: ['React', 'JavaScript', 'CSS'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev003',
-        position: 'Backend Developer',
-        period: '15 พ.ค. 2568 - 15 ส.ค. 2568',
-        type: 'full time',
-        education: 'ปริญญาตรี',
-        department: 'วิทยาการคอมพิวเตอร์',
-        skill: ['Node.js', 'Express', 'MongoDB'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev004',
-        position: 'Mobile Developer',
-        period: '10 ก.ค. 2568 - 10 ต.ค. 2568',
-        type: 'part time',
-        education: 'ปริญญาตรี',
-        department: 'วิศวกรรมซอฟต์แวร์',
-        skill: ['Flutter', 'Dart'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev005',
-        position: 'Data Analyst',
-        period: '1 ส.ค. 2568 - 1 พ.ย. 2568',
-        type: 'internship',
-        education: 'ปริญญาโท',
-        department: 'สถิติ',
-        skill: ['Python', 'Excel', 'SQL'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev006',
-        position: 'AI Engineer',
-        period: '5 มิ.ย. 2568 - 5 ก.ย. 2568',
-        type: 'full time',
-        education: 'ปริญญาโท',
-        department: 'วิศวกรรมคอมพิวเตอร์',
-        skill: ['Python', 'TensorFlow', 'Keras'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev007',
-        position: 'UI/UX Designer',
-        period: '15 ก.ค. 2568 - 15 ต.ค. 2568',
-        type: 'part time',
-        education: 'ปริญญาตรี',
-        department: 'ศิลปกรรม',
-        skill: ['Figma', 'Adobe XD'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev008',
-        position: 'QA Engineer',
-        period: '20 เม.ย. 2568 - 20 ก.ค. 2568',
-        type: 'internship',
-        education: 'ปริญญาตรี',
-        department: 'วิศวกรรมซอฟต์แวร์',
-        skill: ['Selenium', 'JMeter'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev009',
-        position: 'DevOps Engineer',
-        period: '1 พ.ค. 2568 - 1 ส.ค. 2568',
-        type: 'full time',
-        education: 'ปริญญาตรี',
-        department: 'วิศวกรรมคอมพิวเตอร์',
-        skill: ['Docker', 'Kubernetes', 'AWS'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev010',
-        position: 'System Analyst',
-        period: '10 มิ.ย. 2568 - 10 ก.ย. 2568',
-        type: 'part time',
-        education: 'ปริญญาโท',
-        department: 'เทคโนโลยีสารสนเทศ',
-        skill: ['UML', 'SQL', 'Communication'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev011',
-        position: 'Full Stack Developer',
-        period: '1 ก.ค. 2568 - 1 ต.ค. 2568',
-        type: 'full time',
-        education: 'ปริญญาตรี',
-        department: 'วิทยาการคอมพิวเตอร์',
-        skill: ['React', 'Node.js', 'MongoDB'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev012',
-        position: 'Game Developer',
-        period: '25 เม.ย. 2568 - 25 ก.ค. 2568',
-        type: 'internship',
-        education: 'ปริญญาตรี',
-        department: 'วิศวกรรมซอฟต์แวร์',
-        skill: ['Unity', 'C#', 'Blender'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev013',
-        position: 'Security Engineer',
-        period: '1 มิ.ย. 2568 - 1 ก.ย. 2568',
-        type: 'part time',
-        education: 'ปริญญาโท',
-        department: 'ความมั่นคงไซเบอร์',
-        skill: ['Penetration Testing', 'Wireshark'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev014',
-        position: 'Cloud Engineer',
-        period: '15 พ.ค. 2568 - 15 ส.ค. 2568',
-        type: 'full time',
-        education: 'ปริญญาตรี',
-        department: 'เทคโนโลยีสารสนเทศ',
-        skill: ['AWS', 'Azure', 'GCP'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev015',
-        position: 'Technical Writer',
-        period: '10 ก.ค. 2568 - 10 ต.ค. 2568',
-        type: 'internship',
-        education: 'ปริญญาตรี',
-        department: 'อักษรศาสตร์',
-        skill: ['Markdown', 'Git', 'Technical English'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev016',
-        position: 'Database Administrator',
-        period: '1 ส.ค. 2568 - 1 พ.ย. 2568',
-        type: 'full time',
-        education: 'ปริญญาโท',
-        department: 'ระบบสารสนเทศ',
-        skill: ['MySQL', 'PostgreSQL', 'Backup'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev017',
-        position: 'IT Support',
-        period: '5 มิ.ย. 2568 - 5 ก.ย. 2568',
-        type: 'part time',
-        education: 'ปวส.',
-        department: 'คอมพิวเตอร์ธุรกิจ',
-        skill: ['Hardware', 'Troubleshooting', 'Networking'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev018',
-        position: 'Blockchain Developer',
-        period: '15 ก.ค. 2568 - 15 ต.ค. 2568',
-        type: 'internship',
-        education: 'ปริญญาโท',
-        department: 'วิศวกรรมซอฟต์แวร์',
-        skill: ['Solidity', 'Web3.js', 'Ethereum'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev019',
-        position: 'Machine Learning Engineer',
-        period: '20 เม.ย. 2568 - 20 ก.ค. 2568',
-        type: 'full time',
-        education: 'ปริญญาเอก',
-        department: 'วิทยาศาสตร์ข้อมูล',
-        skill: ['scikit-learn', 'pandas', 'NumPy'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev020',
-        position: 'Scrum Master',
-        period: '1 พ.ค. 2568 - 1 ส.ค. 2568',
-        type: 'part time',
-        education: 'ปริญญาโท',
-        department: 'การจัดการเทคโนโลยี',
-        skill: ['Agile', 'Jira', 'Facilitation'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-    {
-        id: 'Dev021',
-        position: 'Network Engineer',
-        period: '10 มิ.ย. 2568 - 10 ก.ย. 2568',
-        type: 'full time',
-        education: 'ปริญญาตรี',
-        department: 'วิศวกรรมโทรคมนาคม',
-        skill: ['Cisco', 'Routing', 'Switching'],
-        createdAt: '10 นาทีผ่านไป',
-    },
-];
 
+
+const getInternshipTypeText = (type: string) => {
+  switch (type) {
+    case 'FULL_TIME':
+      return 'พนักงานประจำ';
+    case 'PART_TIME':
+      return 'พาร์ทไทม์';
+    case 'INTERNSHIP':
+      return 'ฝึกงาน';
+    default:
+      return 'ไม่ระบุ'; 
+  }
+}
 
 //ระบบเปลี่ยนหน้า
 function App() {
   const [showPop, setShowPop] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, user } = useAuth();
  
-  const totalPages = Math.ceil(applications.length / itemsPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // scroll กลับบนสุดเมื่อเปลี่ยนหน้า
-  };
-
-  const currentItems = applications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const Pagination = () => {
-    const getPageNumbers = () => {
-      const pages = [];
-      const maxVisible = 5;
-
-      if (totalPages <= maxVisible) {
-        for (let i = 1; i <= totalPages; i++) {
-          pages.push(i);
+  useEffect(() => {
+    const fetchStudents = async () => {
+      // ตรวจสอบว่าผู้ใช้เป็น COMPANY และล็อกอินอยู่หรือไม่
+      if (isAuthenticated && user?.role === 'COMPANY') {
+        setIsLoading(true);
+        try {
+          const response = await api.get('/students');
+          setStudents(response.data.data); // ข้อมูลอยู่ใน response.data.data
+        } catch (error) {
+          console.error("Failed to fetch students:", error);
+        } finally {
+          setIsLoading(false);
         }
       } else {
-        if (currentPage <= 3) {
-          pages.push(1 , 2 , 3 , 4 , 5 ,  '...');
-        } else if (currentPage >= totalPages - 2) {
-          pages.push('...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-        } else {
-          pages.push('...', currentPage - 1, currentPage, currentPage + 1, '...');
-        }
+        setIsLoading(false);
+        // ถ้าไม่ใช่บริษัท อาจจะแสดงข้อความว่า "เฉพาะบริษัทเท่านั้นที่ดูหน้านี้ได้"
       }
-
-      return pages;
     };
 
-    return (
-      <div className="flex justify-center items-center gap-2 mt-20 mb-20 pt-20 tb-20 ">
-        {getPageNumbers().map((page, index) => (
-          <button
-            key={index}
-            onClick={() => typeof page === 'number' ? handlePageChange(page) : null}
-            disabled={typeof page !== 'number'}
-            className={` w-10 h-10 rounded-full flex items-center justify-center font-medium transition-colors ${
-              page === currentPage
-                ? 'bg-[#00a991] text-black'
-                : typeof page === 'number'
-                ? 'bg-gray-100 text-black hover:bg-gray-200'
-                : 'text-gray-400 cursor-default'
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-      </div>
-    );
-  };
+    fetchStudents();
+  }, [isAuthenticated, user]);
 
-  return (
+    return (
     <div className="w-full">
-    
       <FilterSection />
       <section className="w-full p-16">
         <div className="px-6 py-4">
@@ -310,16 +87,37 @@ function App() {
           </div>
         </div>
         
-        <div className="mt-8 flex w-full flex-wrap items-stretch justify-center gap-8 [&>div:nth-child(3n+1)_.third]:bg-black [&>div:nth-child(3n+2)_.third]:bg-orange-600 [&>div:nth-child(3n+3)_.third]:bg-blue-400">
-          {currentItems.map((app) => (
-            <Card key={app.id} {...app} setShowPopup={setShowPop} />
-          ))}
+        {/* แสดงสถานะการโหลด */}
+        {isLoading && <p className="text-center mt-8">กำลังโหลดข้อมูลนักศึกษา...</p>}
+
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
+          {!isLoading && students.map((student) => {
+            const application = student.internshipApplications?.[0];
+            const period = application 
+              ? `${new Date(application.startDate).toLocaleDateString('th-TH')} - ${new Date(application.endDate).toLocaleDateString('th-TH')}`
+              : 'ไม่ระบุ';
+            
+            return (
+              <Card 
+                key={student.id} 
+                studentId={student.id}
+                studentCode={student.studentCode || 'รอดำเนินการ'}
+                position={student.desiredPosition || 'ไม่ระบุตำแหน่ง'}
+                period={period}
+                type={getInternshipTypeText(application?.internshipType)}
+                education={`ปริญญาตรี ปี ${student.studyYear || '-'}`}
+                department={student.major || 'ไม่ระบุ'}
+                skill={student.skills.map(s => s.skill.name)}
+                createdAt={new Date(student.updatedAt).toLocaleDateString('th-TH')}
+                profileImageUrl={student.profileImageUrl}
+                setShowPopup={setShowPop} 
+              />
+            )
+          })}
         </div>
-        {/* ✅ แสดง Pagination */}
-        <Pagination />   
+        {/* คุณอาจจะต้องปรับแก้ส่วน Pagination ให้ทำงานกับข้อมูลจาก API ต่อไป */}
       </section>
     </div>
-    
   );
 }
 

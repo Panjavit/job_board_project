@@ -3,6 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
+
+interface UserPayload {
+  id: string;
+  profileId: string;
+  role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
+}
 
 const EmployeeLoginPage = () => {
     const [email, setEmail] = useState('');
@@ -23,7 +30,15 @@ const EmployeeLoginPage = () => {
             const {token} = response.data;
             //localStorage.setItem('token',token);
             login(token);
-            navigate('/profile')
+            const decodedToken: { user: UserPayload } = jwtDecode(token);
+            const userRole = decodedToken.user.role;
+            if (userRole === 'COMPANY') {
+                navigate('/company-profile');
+            } else if (userRole === 'CANDIDATE') {
+                navigate('/profile');
+            } else {
+                navigate('/');
+            }
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'เกิดข้อผิดพลาดในการล็อกอิน';
             setError(errorMessage);
@@ -66,7 +81,7 @@ const EmployeeLoginPage = () => {
                     <img src={'/logo-2.png'} alt="login-ideatrade" className="w-[140px] h-[140px]" />
                 </Link>
                 <h1 className="text-4xl font-bold">เข้าสู่ระบบ</h1>
-                <p className="mt-2 text-lg font-bold">สำหรับผู้หางาน</p>
+                {/* <p className="mt-2 text-lg font-bold">สำหรับผู้หางาน</p> */}
                 <form
                     onSubmit={handleLogin}
                     //action=""

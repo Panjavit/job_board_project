@@ -10,14 +10,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 //เลือกรุ่นของ AI ที่จะใช้
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); //รุ่น Flash เพราะเร็วและเพียงพอ
 
-// --- สร้าง Endpoint ---
-// @route   POST /api/ai/suggest-skills
-// @desc    แนะนำ Skill ที่จำเป็นสำหรับตำแหน่งงานที่ระบุ
-// @access  Private (เฉพาะนักศึกษาที่ล็อกอิน)
+// @route   POST /api/ai/suggest-skills  แนะนำ Skill ที่จำเป็นสำหรับตำแหน่งงานที่ระบุ
+
 router.post(
   "/suggest-skills",
-  protect, // Middleware ตรวจสอบว่าล็อกอินหรือยัง
-  authorize("CANDIDATE"), // Middleware ตรวจสอบว่าเป็นนักศึกษาหรือไม่
+  protect, //Middleware ตรวจสอบว่าล็อกอินหรือยัง
+  authorize("CANDIDATE"), //Middleware ตรวจสอบว่าเป็นนักศึกษาหรือไม่
   async (req, res) => {
     //ดึงชื่อตำแหน่งงานจาก Request Body
     const { position } = req.body;
@@ -29,7 +27,7 @@ router.post(
 
     //สร้าง Prompt(ชุดคำสั่ง) ที่จะส่งให้ AI
     //เราจะสั่งให้ AI ตอบกลับมาในรูปแบบ JSON ที่ชัดเจนเพื่อง่ายต่อการนำไปใช้
-    const prompt = `List the top 10 essential skills for an internship position as a "${position}". Return the response as a valid JSON object with a single key "skills" which is an array of strings. For example: { "skills": ["React", "JavaScript", "CSS"] }`;
+    const prompt = `List the top 20 essential skills for an internship position as a "${position}". Return the response as a valid JSON object with a single key "skills" which is an array of strings. For example: { "skills": ["React", "JavaScript", "CSS"] }`;
 
     try {
       //ส่ง Prompt ไปให้ AI ประมวลผล

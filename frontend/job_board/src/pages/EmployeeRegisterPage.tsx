@@ -53,7 +53,7 @@ const EmployeeRegisterPage = () => {
                     <img src={'/logo-2.png'} alt="login-ideatrade" className="w-[140px] h-[140px]" />
                   </Link>
                 <h1 className="text-4xl font-bold">ลงทะเบียน</h1>
-                <p className="mt-2 text-lg font-bold">สำหรับผู้หางาน</p>
+                {/* <p className="mt-2 text-lg font-bold">สำหรับผู้หางาน</p> */}
                 <form
                     onSubmit={handleRegister}
                     //action=""
