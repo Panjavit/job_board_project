@@ -25,21 +25,15 @@ const CertificateSide: React.FC<CertificateSideProps> = ({ onUpdate, onClose }) 
         }
         setIsUploading(true);
 
-        // Logic การอัปโหลดไฟล์ (ในแอปจริงควรเป็นฟังก์ชันแยก)
-        // 1. อัปโหลดไฟล์ไปที่ Cloud Storage (เช่น Firebase Storage, AWS S3)
-        // 2. ได้รับ URL ของไฟล์กลับมา
-        // 3. ส่งข้อมูลไปที่ Backend API ของเรา
-        
-        // นี่คือการจำลอง Logic
-        try {
-            // สมมติว่าอัปโหลดไฟล์สำเร็จและได้ URL กลับมา
-            const fileUrl = `https://fake-storage.com/${file.name}`;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('description', description);
 
-            await api.post('/certificate-files', {
-                fileName: file.name,
-                fileUrl: fileUrl,
-                fileType: file.type,
-                description: description
+        try {
+            await api.post('/certificate-files', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
 
             alert('เพิ่มรางวัล/ใบประกาศสำเร็จ!');
@@ -62,12 +56,12 @@ const CertificateSide: React.FC<CertificateSideProps> = ({ onUpdate, onClose }) 
                 <div>
                     <label className="text-lg font-bold">อัปโหลดรูปภาพ/ไฟล์</label>
                     <div className="mt-2 flex justify-center items-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg">
-                        <input type="file" onChange={handleFileChange} className="text-sm" />
+                        <input type="file" onChange={handleFileChange} required className="text-sm" />
                     </div>
                     {file && <p className="text-sm text-gray-600 mt-2">ไฟล์ที่เลือก: {file.name}</p>}
                 </div>
                 <div>
-                    <label htmlFor="description" className="text-lg font-bold">รายละเอียด</label>
+                    <label htmlFor="description" className="text-lg font-bold">รายละเอียด (ถ้ามี)</label>
                     <textarea
                         id="description"
                         rows={5}
@@ -78,7 +72,7 @@ const CertificateSide: React.FC<CertificateSideProps> = ({ onUpdate, onClose }) 
                     />
                 </div>
             </div>
-             <div className="mt-8 flex justify-end gap-4">
+             <div className="mt-8 flex justify-end gap-4 border-t pt-6">
                 <button type="button" onClick={onClose} disabled={isUploading} className="bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 font-semibold disabled:opacity-50">
                     ยกเลิก
                 </button>

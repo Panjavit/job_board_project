@@ -3,7 +3,7 @@ import React from 'react';
 
 interface VideoUploadCardProps {
     videoUrl: string | null;
-    onEditClick: () => void;
+    onEditClick?: () => void;
 }
 
 const VideoUploadCard: React.FC<VideoUploadCardProps> = ({
@@ -34,14 +34,15 @@ const VideoUploadCard: React.FC<VideoUploadCardProps> = ({
                 )}
             </div>
 
-            {/* 3. เปลี่ยนจาก <label> เป็น <button> และใช้ onClick */}
-            <button
-                type="button"
-                onClick={onEditClick}
-                className="inline-block w-full cursor-pointer rounded border border-teal-500 px-4 py-2 text-center text-sm text-teal-500 hover:bg-teal-50"
-            >
-                {videoUrl ? 'แก้ไขข้อมูลวิดีโอ' : 'เพิ่มวิดีโอ'}
-            </button>
+            {onEditClick && (
+                <button
+                    type="button"
+                    onClick={onEditClick}
+                    className="inline-block w-full cursor-pointer rounded border border-teal-500 px-4 py-2 text-center text-sm text-teal-500 hover:bg-teal-50"
+                >
+                    {videoUrl ? 'แก้ไขข้อมูลวิดีโอ' : 'เพิ่มวิดีโอ'}
+                </button>
+            )}
         </div>
     );
 };

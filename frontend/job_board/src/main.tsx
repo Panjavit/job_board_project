@@ -11,6 +11,7 @@ import EmployeeRegisterPage from './pages/EmployeeRegisterPage.tsx';
 import { AuthProvider } from './context/AuthContext.tsx';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import CompanyPage from './pages/CompanyPage.tsx';
+import StudentDetailPage from './pages/StudentDetailPage.tsx';
 
 const router = createBrowserRouter([
     {
@@ -52,6 +53,14 @@ const router = createBrowserRouter([
     {
         path: '/auth/employee/register',
         element: <EmployeeRegisterPage />,
+    },
+    {
+        path: '/students/:studentId', //ใช้studentIdเป็นพารามิเตอร์
+        element: (
+            <MainLayout>
+                <StudentDetailPage />
+            </MainLayout>
+        ),
     },
 ]);
 

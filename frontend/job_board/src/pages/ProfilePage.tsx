@@ -169,9 +169,7 @@ const ProfilePage: React.FC = () => {
         try {
             await api.delete(`/certificate-files/${fileId}`);
             alert('ลบไฟล์เรียบร้อย');
-            const response = await api.get<CandidateProfile>(
-                '/profiles/candidate/me'
-            );
+            const response = await api.get('/profiles/candidate/me');
             handleProfileUpdate(response.data);
         } catch (error) {
             console.error('Failed to delete certificate file:', error);
@@ -441,68 +439,41 @@ const ProfilePage: React.FC = () => {
                             ) : null}
                         </ProfileCard>
                         <ProfileCard
-                            title="รางวัลหรือใบประกาศนียบัตร"
-                            placeholder="คลิก 'เพิ่มข้อมูล' เพื่อแนบไฟล์รางวัลหรือใบประกาศ"
-                            onEditClick={() => setIsCertificateFormOpen(true)}
-                        >
-                            {/* ตรวจสอบว่ามีข้อมูล certificateFiles หรือไม่ */}
-                            {profile.certificateFiles &&
-                                profile.certificateFiles.length > 0 && (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* วนลูปแสดงผลไฟล์แต่ละรายการ */}
-                                        {profile.certificateFiles.map(
-                                            (file: any) => (
-                                                <div
-                                                    key={file.id}
-                                                    className="group relative overflow-hidden rounded-lg border"
-                                                >
-                                                    {/* ส่วนแสดงผล: ถ้าเป็นไฟล์รูปให้แสดงรูป, ถ้าไม่ให้แสดงไอคอน */}
-                                                    {file.type.startsWith(
-                                                        'image/'
-                                                    ) ? (
-                                                        <img
-                                                            src={`http://localhost:5001${file.url}`}
-                                                            alt={file.name}
-                                                            className="h-40 w-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="flex h-40 w-full flex-col items-center justify-center bg-gray-100 p-4 text-center">
-                                                            <i className="fa-solid fa-file-alt text-4xl text-gray-400"></i>
-                                                            <span className="mt-2 text-xs break-all text-gray-600">
-                                                                {file.name}
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    {/* ส่วนแสดงรายละเอียด (ถ้ามี) */}
-                                                    {file.description && (
-                                                        <div className="p-3">
-                                                            <p className="text-sm text-gray-700">
-                                                                {
-                                                                    file.description
-                                                                }
-                                                            </p>
-                                                        </div>
-                                                    )}
-
-                                                    {/* ปุ่มลบ จะปรากฏเมื่อเอาเมาส์ไปชี้ (group-hover) */}
-                                                    <button
-                                                        onClick={() =>
-                                                            handleDeleteCertificate(
-                                                                file.id
-                                                            )
-                                                        }
-                                                        className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
-                                                        aria-label="ลบไฟล์นี้"
-                                                    >
-                                                        <i className="fa-solid fa-trash"></i>
-                                                    </button>
+                        title="รางวัลหรือใบประกาศนียบัตร"
+                        placeholder="คลิก 'เพิ่มข้อมูล' เพื่อแนบไฟล์รางวัลหรือใบประกาศ"
+                        onEditClick={() => setIsCertificateFormOpen(true)}
+                    >
+                        {profile.certificateFiles && profile.certificateFiles.length > 0 && (
+                            <div className="grid grid-cols-2 gap-4">
+                                {profile.certificateFiles.map((file: any) => (
+                                    <div key={file.id} className="group relative overflow-hidden rounded-lg border">
+                                        {/* ทำให้รูปภาพเป็นลิงก์ที่เปิดได้ */}
+                                        <a href={`http://localhost:5001${file.url}`} target="_blank" rel="noopener noreferrer">
+                                            {file.type.startsWith('image/') ? (
+                                                <img src={`http://localhost:5001${file.url}`} alt={file.name} className="h-40 w-full object-cover"/>
+                                            ) : (
+                                                <div className="flex h-40 w-full flex-col items-center justify-center bg-gray-100 p-4 text-center">
+                                                    <i className="fa-solid fa-file-alt text-4xl text-gray-400"></i>
+                                                    <span className="mt-2 text-xs break-all text-gray-600">{file.name}</span>
                                                 </div>
-                                            )
-                                        )}
+                                            )}
+                                        </a>
+
+                                        {file.description && <div className="p-3"><p className="text-sm text-gray-700">{file.description}</p></div>}
+
+                                        {/* ปุ่มลบ จะปรากฏเมื่อเอาเมาส์ไปชี้ และเรียกฟังก์ชันที่ถูกต้อง */}
+                                        <button
+                                            onClick={() => handleDeleteCertificate(file.id)}
+                                            className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
+                                            aria-label="ลบไฟล์นี้"
+                                        >
+                                            <i className="fa-solid fa-trash"></i>
+                                        </button>
                                     </div>
-                                )}
-                        </ProfileCard>
+                                ))}
+                            </div>
+                        )}
+                    </ProfileCard>
                     </div>
 
                     <div className="space-y-6">

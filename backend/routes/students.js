@@ -120,7 +120,15 @@ router.get("/:id", protect, authorize("COMPANY"), async (req, res) => {
                     include: {
                         skill: true,
                     }
-                }
+                },
+                workHistory: {
+                    orderBy: {
+                      startDate: "desc",
+                    },
+                },
+                certificateFiles: true,
+                contactFiles: true,
+                internshipApplications: true,
             }
         })
         
