@@ -22,7 +22,7 @@ const Navbar = () => {
                     alt="ideatrade logo"
                     className="mr-4 h-31 w-41 pr-4"
                 />
-                <div className="my-5 mr-68 flex flex-col pr-68 text-xl font-semibold md:flex-row">
+                <div className="my-5 mr-68 flex flex-col pr-68 text-[26px] font-bold md:flex-row">
                     <Link
                         to={'/'}
                         className={`p-12 text-white transition-all hover:text-black hover:underline ${pathname === '/' && 'after:scale-100'}`}
