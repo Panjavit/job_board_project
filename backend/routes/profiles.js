@@ -1,7 +1,7 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
 import { protect, authorize } from "../middleware/auth.js";
-import upload from "../middleware/upload.js"
+import upload from "../middleware/upload.js";
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -73,15 +73,18 @@ router.patch(
       if (fullName !== undefined) dataToUpdate.fullName = fullName;
       if (contactEmail !== undefined) dataToUpdate.contactEmail = contactEmail;
       if (major !== undefined) dataToUpdate.major = major;
-      if (studyYear !== undefined) dataToUpdate.studyYear = studyYear ? parseInt(studyYear, 10) : null;
+      if (studyYear !== undefined)
+        dataToUpdate.studyYear = studyYear ? parseInt(studyYear, 10) : null;
       if (bio !== undefined) dataToUpdate.bio = bio;
       if (nickname !== undefined) dataToUpdate.nickname = nickname;
       if (gender !== undefined) dataToUpdate.gender = gender;
-      if (dateOfBirth !== undefined) dataToUpdate.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
+      if (dateOfBirth !== undefined)
+        dataToUpdate.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : null;
       if (phoneNumber !== undefined) dataToUpdate.phoneNumber = phoneNumber;
       if (education !== undefined) dataToUpdate.education = education;
       if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
-      if (videoDescription !== undefined) dataToUpdate.videoDescription = videoDescription;
+      if (videoDescription !== undefined)
+        dataToUpdate.videoDescription = videoDescription;
 
       // ใช้ dataToUpdate ที่สร้างขึ้นมาใหม่ในการอัปเดต
       const updatedProfile = await prisma.candidateProfile.update({
@@ -149,7 +152,7 @@ router.put(
               skill: true,
             },
           },
-           workHistory: {
+          workHistory: {
             orderBy: {
               startDate: "desc",
             },
@@ -210,7 +213,7 @@ router.post(
   "/candidate/me/avatar",
   protect,
   authorize("CANDIDATE"),
-  upload.single("file"), 
+  upload.single("file"),
   async (req, res) => {
     try {
       //ตรวจสอบว่ามีไฟล์ถูกอัปโหลดมาหรือไม่
@@ -235,6 +238,51 @@ router.post(
       });
     } catch (error) {
       console.error("Error uploading avatar:", error);
+      res.status(500).send("Server Error");
+    }
+  }
+);
+
+// @route   GET /api/profiles/company/me/interested-students
+// @desc    ดึงรายชื่อนักศึกษาทั้งหมดที่บริษัทนี้สนใจ
+// @access  Private (COMPANY)
+router.get(
+  "/company/me/interested-students",
+  protect,
+  authorize("COMPANY"),
+  async (req, res) => {
+    try {
+      //ค้นหา "Interaction" ทั้งหมดที่ตรงกับ ID ของบริษัทที่ล็อกอินอยู่
+      const interactions = await prisma.interaction.findMany({
+        where: {
+          companyProfileId: req.user.profileId,
+        },
+        orderBy: {
+          createdAt: "desc", // เรียงจากล่าสุดไปเก่าสุด
+        },
+        //สั่งให้ดึงข้อมูลของ "student" ที่เชื่อมกับ Interaction นั้นๆ มาด้วย
+        include: {
+          student: {
+            select: {
+              id: true,
+              fullName: true,
+              desiredPosition: true,
+              major: true,
+              profileImageUrl: true,
+              internshipApplications: {
+                select: {
+                  universityName: true,
+                },
+                take: 1, // ดึงมาแค่ 1 record ก็พอ
+              },
+            },
+          },
+        },
+      });
+      //ส่งข้อมูลที่ได้กลับไปให้ Frontend
+      res.json(interactions);
+    } catch (error) {
+      console.error("Error fetching interested students:", error);
       res.status(500).send("Server Error");
     }
   }

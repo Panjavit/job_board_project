@@ -82,6 +82,7 @@ const ProfilePage: React.FC = () => {
     const [isResumeFormOpen, setIsResumeFormOpen] = useState(false);
     const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
     const [isSkillsFormOpen, setIsSkillsFormOpen] = useState(false);
+    
 
     const fetchProfile = async () => {
         if (isAuthenticated && user?.role === 'CANDIDATE') {
@@ -284,6 +285,32 @@ const ProfilePage: React.FC = () => {
         contactFiles: [], // Placeholder
     };
 
+    const profileCompletenessUI = (
+    <div>
+        <p className="mb-2 text-sm opacity-90">
+            ความสมบูรณ์ของโปรไฟล์
+        </p>
+        <div className="mb-4">
+            <div className="mb-2 h-2 w-48 rounded-full bg-gray-300">
+                <div
+                    className="h-2 rounded-full bg-teal-400 transition-all duration-300"
+                    style={{ width: `${completionRate}%` }}
+                ></div>
+            </div>
+            <p className="text-right text-sm font-bold">
+                {completionRate}%
+            </p>
+        </div>
+        {/* คุณสามารถเพิ่มปุ่ม "แก้ไขข้อมูล" ตรงนี้ได้ ถ้าต้องการ */}
+        <button
+            onClick={() => setIsPersonalInfoFormOpen(true)}
+            className="rounded bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
+        >
+            แก้ไขข้อมูล
+        </button>
+    </div>
+);
+
     const getInternshipTypeText = (type: string) => {
         switch (type) {
             case 'FULL_TIME':
@@ -301,8 +328,9 @@ const ProfilePage: React.FC = () => {
         <div className="min-h-screen bg-gray-50">
             <ProfileHeader
                 user={userDataForHeader}
-                completionRate={completionRate} // << ใช้ค่าที่คำนวณใหม่จาก useMemo
-                onEditClick={() => setIsPersonalInfoFormOpen(true)}
+                // completionRate={completionRate}
+                // onEditClick={() => setIsPersonalInfoFormOpen(true)}
+                actionsSlot={profileCompletenessUI}
                 onSave={handleHeaderSave}
                 onProfileUpdate={fetchProfile}
             />

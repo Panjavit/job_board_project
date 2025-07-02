@@ -2,19 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
-// START: 1. แก้ไข Interface ให้ props ที่เป็นฟังก์ชันเป็นแบบไม่บังคับ (Optional)
 interface ProfileHeaderProps {
     user: CandidatProfile;
-    completionRate: number;
-    onEditClick?: () => void; // เพิ่ม ?
+    completionRate?: number;
+    onEditClick?: () => void;
     onSave?: (data: {
         name: string;
         phone: string;
         profileImage: string;
-    }) => void; // เพิ่ม ?
-    onProfileUpdate?: () => void; // เพิ่ม ?
+    }) => void;
+    onProfileUpdate?: () => void;
+    actionsSlot?: React.ReactNode;
 }
-// END: 1.
 
 interface CandidatProfile {
     name: string;
@@ -42,6 +41,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     onEditClick,
     onSave,
     onProfileUpdate,
+    actionsSlot,
 }) => {
     const [isEditingHeader, setIsEditingHeader] = useState<boolean>(false);
     const [tempData, setTempData] = useState({
@@ -107,7 +107,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     };
 
     if (isEditingHeader) {
-        // ... (ส่วน JSX ของโหมดแก้ไขเหมือนเดิม) ...
         return (
             <div className="h-[200px] bg-gradient-to-r from-blue-900 to-purple-700 p-8 text-white">
                 {/* ... JSX content ... */}
@@ -150,32 +149,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     </div>
                 </div>
                 <div className="mr-80 text-right">
-                    <p className="mb-2 text-sm opacity-90">
-                        ความสมบูรณ์ของโปรไฟล์
-                    </p>
-                    <div className="mb-4">
-                        <div className="mb-2 h-2 w-48 rounded-full bg-gray-300">
-                            <div
-                                className="h-2 rounded-full bg-teal-400 transition-all duration-300"
-                                style={{ width: `${completionRate}%` }}
-                            ></div>
-                        </div>
-                        <p className="text-right text-sm font-bold">
-                            {completionRate}%
-                        </p>
-                    </div>
-                    <div className="space-x-2">
-                        {/* START: 2. เพิ่มเงื่อนไขการแสดงผลปุ่มแก้ไข */}
-                        {onEditClick && (
-                            <button
-                                onClick={() => setIsEditingHeader(true)}
-                                className="rounded bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-                            >
-                                แก้ไขข้อมูล
-                            </button>
-                        )}
-                        {/* END: 2. */}
-                    </div>
+                    {/* "ช่อง" ที่จะแสดง UI ที่ถูกส่งเข้ามา */}
+                    {actionsSlot}
                 </div>
             </div>
         </div>

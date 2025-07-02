@@ -46,17 +46,27 @@ const Navbar = () => {
                         เกี่ยวกับเรา
                     </Link>
                 </div>
-                <div className="my-5 flex flex-col md:flex-row">
+                <div className="my-5 flex flex-col md:flex-row md:items-center md:gap-4">
                     {isAuthenticated ? (
-                        //ถ้าล็อกอินอยู่ ให้แสดงปุ่ม Logout
-                        <div className="my-2 md:mx-5">
-                            <button
-                                onClick={handleLogout}
-                                className="transform rounded-full bg-white px-6 py-3 text-xl text-black transition-all hover:bg-red-500"
-                            >
-                                ออกจากระบบ
-                            </button>
-                        </div>
+                        <>
+                            {/* เงื่อนไข: ถ้าเป็น Candidate ให้แสดงชื่อ */}
+                            {user?.role === 'CANDIDATE' && (
+                                <span className="font-semibold text-white">
+                                    {/* ดึงเฉพาะชื่อแรกมาแสดง */}
+                                    สวัสดี, {user.name?.split(' ')[0]}
+                                </span>
+                            )}
+
+                            {/* ปุ่มออกจากระบบ (เหมือนเดิม) */}
+                            <div className="my-2 md:mx-0">
+                                <button
+                                    onClick={handleLogout}
+                                    className="transform rounded-full bg-black px-6 py-3 text-xl text-white transition-all hover:bg-gray-800"
+                                >
+                                    ออกจากระบบ
+                                </button>
+                            </div>
+                        </>
                     ) : (
                         //ถ้ายังไม่ล็อกอิน ให้แสดงปุ่ม Login ทั้งสอง
                         <>

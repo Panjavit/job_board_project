@@ -5,6 +5,7 @@ interface User{
     id: string;
     profileId: string;
     role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
+    name: string;
 }
 
 interface AuthContextType {

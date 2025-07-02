@@ -66,8 +66,8 @@ router.post('/login', async (req, res) =>{
         const user = await prisma.user.findUnique({
             where: { email },
             include: {
-                candidateProfile: {select: {id: true}}, // สั่งให้ดึงข้อมูล candidateProfile มาด้วย
-                companyProfile: {select: {id: true}}    // สั่งให้ดึงข้อมูล companyProfile มาด้วย
+                candidateProfile: { select: { id: true, fullName: true } },
+                companyProfile: { select: { id: true, companyName: true } }   // สั่งให้ดึงข้อมูล companyProfile มาด้วย
             }
         });
         if (!user || !user.password){
@@ -80,13 +80,15 @@ router.post('/login', async (req, res) =>{
         }
 
         const profileId = user.candidateProfile?.id || user.companyProfile?.id;
+        const displayName = user.candidateProfile?.fullName || user.companyProfile?.companyName;
 
         //สร้างข้อมูลสำหรับ Token
         const payload = {
             user: {
                 id: user.id,
                 profileId: profileId,
-                role: user.role
+                role: user.role,
+                name: displayName
             }
         };
 
@@ -165,6 +167,7 @@ router.post('/google', async (req,res) =>{
                 id: user.id,
                 profileId: profileId,
                 role: user.role,
+                name: user.candidateProfile?.fullName,
             }
         }
 

@@ -101,6 +101,7 @@ model Interaction {
   companyProfileId String
   student          CandidateProfile @relation("StudentInteractions", fields: [studentProfileId], references: [id])
   studentProfileId String
+  @@unique([companyProfileId, studentProfileId])
 }
 
 //เพิ่ม Model ใหม่สำหรับเก็บประวัติการทำงาน

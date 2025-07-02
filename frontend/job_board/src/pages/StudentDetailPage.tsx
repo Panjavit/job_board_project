@@ -4,7 +4,7 @@ import api from '../services/api';
 
 import { ProfileHeader, ProfileCard, VideoUploadCard } from '../components';
 
-// Interface สำหรับข้อมูลที่ได้รับจาก API
+//Interface สำหรับข้อมูลที่ได้รับจาก API
 interface CandidateProfile {
     id: string;
     fullName: string;
@@ -22,13 +22,13 @@ interface CandidateProfile {
     studyYear: number | null;
     education: string | null;
     internshipApplications: any[];
+    isInterestedByCompany?: boolean;
     experience: string | null;
     projects: string | null;
     achievements: string | null;
 }
 
-// START: แก้ไข Interface นี้ให้ตรงกับที่ ProfileHeader ต้องการ
-// Interface สำหรับส่งข้อมูลให้ Header
+//Interface สำหรับส่งข้อมูลให้ Header
 interface UserDataForHeader {
     name: string;
     position: string;
@@ -45,12 +45,13 @@ interface UserDataForHeader {
     certificateFiles: any[];
     contactFiles: any[];
 }
-// END: แก้ไข Interface
 
 const StudentDetailPage: React.FC = () => {
     const { studentId } = useParams<{ studentId: string }>();
     const [profile, setProfile] = useState<CandidateProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isInterested, setIsInterested] = useState(false);
 
     useEffect(() => {
         const fetchStudentProfile = async () => {
@@ -59,6 +60,7 @@ const StudentDetailPage: React.FC = () => {
             try {
                 const response = await api.get(`/students/${studentId}`);
                 setProfile(response.data);
+                setIsInterested(response.data.isInterestedByCompany || false);
             } catch (error) {
                 console.error('Failed to fetch student profile:', error);
                 setProfile(null);
@@ -96,6 +98,26 @@ const StudentDetailPage: React.FC = () => {
         }
     };
 
+    const handleShowInterest = async () => {
+        if (!studentId) return;
+        setIsSubmitting(true);
+        try {
+            await api.post(`/interactions/interest/${studentId}`, {
+                contactInstructions:
+                    'บริษัทฯ ได้รับข้อมูลการสมัครของท่านเรียบร้อยแล้ว ขอขอบคุณที่ท่านให้ความสนใจในการร่วมงานกับเรา ทั้งนี้ เจ้าหน้าที่ฝ่ายบุคคลจะติดต่อท่านกลับไปอีกครั้งเพื่อแจ้งผลการพิจารณาในลำดับถัดไป',
+            });
+            alert('แสดงความสนใจสำเร็จ!');
+            setIsInterested(true);
+        } catch (error: any) {
+            alert(
+                `ไม่สามารถแสดงความสนใจได้: ${error.response?.data?.message || 'เกิดข้อผิดพลาด'}`
+            );
+            if (error.response?.status === 400) setIsInterested(true);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     // สร้าง object userDataForHeader ให้มี property ครบถ้วนตามที่ Interface ใหม่กำหนด
     const userDataForHeader: UserDataForHeader = {
         name: profile.fullName,
@@ -119,9 +141,29 @@ const StudentDetailPage: React.FC = () => {
         contactFiles: profile.contactFiles || [],
     };
 
+    const interestButton = (
+        <button
+            onClick={handleShowInterest}
+            disabled={isInterested || isSubmitting}
+            className={`
+            w-48 rounded-lg px-4 py-3 text-base font-bold text-white transition-all
+            bg-teal-500 hover:bg-teal-600
+            ${isInterested ? 'cursor-not-allowed bg-green-600' : ''}
+            ${isSubmitting ? 'cursor-wait bg-gray-500' : ''}
+            ${!isInterested && !isSubmitting ? 'bg-teal-500 hover:bg-teal-600' : ''}
+        `}
+        >
+            {isSubmitting
+                ? 'กำลังส่ง...'
+                : isInterested
+                  ? '✔️ สนใจแล้ว'
+                  : 'แสดงความสนใจ'}
+        </button>
+    );
+
     return (
         <div className="min-h-screen bg-gray-50">
-            <ProfileHeader user={userDataForHeader} completionRate={100} />
+            <ProfileHeader user={userDataForHeader} completionRate={100} actionsSlot={interestButton} />
 
             <div className="mx-auto max-w-7xl px-6 py-6">
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
