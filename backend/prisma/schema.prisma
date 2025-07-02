@@ -43,10 +43,10 @@ model CandidateProfile {
   profileImageUrl   String?   // เพิ่ม: สำหรับ profileImage
   videoUrl          String?   // เปลี่ยนชื่อจาก youtubeIntroLink
   videoDescription  String?
-  experience        String?   @db.Text // เพิ่ม: สำหรับ experience (ข้อความสรุป)
-  education         String?   @db.Text // เพิ่ม: สำหรับ education (ข้อความสรุป)
-  projects          String?   @db.Text // เพิ่ม: สำหรับ projects
-  achievements      String?   @db.Text // เพิ่ม: สำหรับ achievements
+  experience        String?    @db.Text // เพิ่ม: สำหรับ experience (ข้อความสรุป)
+  education         String?    @db.Text // เพิ่ม: สำหรับ education (ข้อความสรุป)
+  projects          String?    @db.Text // เพิ่ม: สำหรับ projects
+  achievements      String?    @db.Text // เพิ่ม: สำหรับ achievements
 
   // ความสัมพันธ์
   user      User          @relation(fields: [userId], references: [id])
@@ -144,7 +144,7 @@ model InternshipApplication {
   universityName     String
   startDate          DateTime
   endDate            DateTime
-  reason             String   @db.Text
+  reason             String    @db.Text
   status             ApplicationStatus @default(PENDING) // สถานะใบสมัคร
   internshipType     InternshipType    @default(INTERNSHIP)
 
