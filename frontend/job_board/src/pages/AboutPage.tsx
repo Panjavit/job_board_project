@@ -1,166 +1,119 @@
 
-import React from 'react';
+
 
 const AboutPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* เกี่ยวกับเรา - Hero Section */}
-      <section className="bg-gradient-to-r from-teal-600 to-teal-400 text-white py-20">
-        <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Side - Mobile Phones */}
-          <div className="flex justify-center items-center space-x-8">
-            {/* Left Phone (Pi App) */}
-            <div className="transform rotate-12">
-              <div className="w-40 h-80 bg-gray-300 rounded-3xl shadow-2xl">
-                {/* Phone placeholder for Pi app */}
-              </div>
-            </div>
-            
-            {/* Right Phone (Trading Screen) */}
-            <div className="transform -rotate-6">
-              <div className="w-40 h-80 bg-gray-800 rounded-3xl shadow-2xl">
-                {/* Phone placeholder for trading screen */}
-              </div>
-            </div>
-          </div>
-          
-          {/* Right Side - Content */}
-          <div>
-            <h1 className="text-5xl font-bold mb-6">เกี่ยวกับเรา</h1>
-            <div className="space-y-4 text-lg leading-relaxed">
-              <p>
-                พวกเราคือบริษัทที่มุ่งมั่นสร้างแพลตฟอร์มในการค้นหางานที่ดีที่สุดสำหรับการลงทุนและการจ้างงาน
-                ด้วยเทคโนโลยีที่ล้ำสมัยและทีมงานมืออาชีพ เพื่อให้ความสะดวกทั้งแก่นักลงทุนและผู้หางาน
-                ในการเชื่อมต่อและสร้างโอกาสใหม่ๆ ในโลกการลงทุนและการทำงานได้อย่างไร้ขีดจำกัด
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="bg-cover bg-center bg-no-repeat h-[400px] bg-gradient-to-r from-teal-600 to-teal-400 text-white py-20" style={{
+       backgroundImage: "url('/image/abousimg.png')" }}>
+       <div className="container mx-auto px-4">
+         <div className="flex flex-col justify-center items-center text-center">
+           <h1 className="text-5xl font-bold mb-8 mt-5">เกี่ยวกับเรา</h1>
+         <div className="max-w-4xl font-bold mt-2">
+         <p className="text-[17px]  leading-relaxed ">
+          พวกเราเชื่อมั่นว่าทุกคนควรสามารถลงทุนในหลักทรัพย์มากมายหลากหลายประเภท
+         </p>
+         <p className="text-[17px]  leading-relaxed">
+          ตามที่ต้องการได้อย่างสะดวกสบายเพื่อไล่ตามความฝันและบรรลุเป้าหมายทางการเงินที่ได้ตั้งใจไว้
+         </p>
+       </div>
+      </div>
+     </div>
+    </section>
 
       {/* ข้อมูลบริษัท Section */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="container mx-auto px-4  ">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center pr-5">
             {/* Left Side - Team Photo Card */}
-            <div className="relative">
-              <div className="bg-blue-600 rounded-2xl p-6">
-                {/* Header */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-lg">Pi</span>
-                  </div>
-                  <div className="text-white">
-                    <h3 className="text-xl font-bold">Investing. Simplified.</h3>
-                  </div>
-                </div>
+            <div className="relative mr-5">
+              <div className="bg-cover bg-center bg-no-repeat w-full h-110 rounded-3xl " style={{
+                  backgroundImage : "url('/image/3pyimg.png')"
+                }}>
                 
-                {/* Team Photo Placeholder */}
-                <div className="w-full h-64 bg-blue-500 rounded-xl">
-                  {/* รูปทีมงาน 3 คน */}
-                </div>
               </div>
             </div>
             
             {/* Right Side - Company Info */}
-            <div>
-              <h2 className="text-3xl font-bold mb-6 text-gray-800">ข้อมูลบริษัท</h2>
-              <div className="space-y-4 text-gray-600 leading-relaxed text-sm">
+            <div className=" ml-5">
+              <h2 className="text-4xl font-bold mb-6 text-gray-800">ข้อมูลบริษัท</h2>
+              <div className="space-y-4 text-gray-800 leading-relaxed text-[17px] font-normal">
                 <p>
-                  บริษัทหลักทรัพย์ พาย จำกัด หรือ Pi Securities 
-                  เป็นผู้ให้บริการด้านการลงทุนที่มีประสบการณ์ในการยาวนานกว่า 50 ปี เป็นนายหน้าซื้อขายหลักทรัพย์ 3 
-                  ช่องทางครอบคลุมทั้งหุ้นในประเทศ (SET)
+                  บริษัทหลักทรัพย์ พาย หรือ Pi Securities <br /> เป็นผู้ให้บริการด้านการลงทุนชั้นนำของประเทศไทยมาอย่างยาวนานกว่า 50 ปี 
+                  เราเป็นสมาชิกหมายเลข 3 <br /> ของตลาดหลักทรัพย์แห่งประเทศไทย (SET) <br />
+                  และอยู่ภายใต้การกำกับดูแลของสำนักงานคณะกรรมการกำกับหลักทรัพย์และตลาดหลักทรัพย์ (ก.ล.ต.) <br />
                 </p>
                 <p>
-                  และยังมีการให้บริการให้กับองค์กรต่างชาติการออกหลักทรัพย์ที่มีมาตรฐานสากลทั้งสกีมทำธุรกิจ (ก.ล.ต.)
+                  โดยเราเป็นผู้ออกแบบและพัฒนาแอปพลิเคชัน Pi Financial <br /> ที่อำนวยความสะดวกในการซื้อขายแลกเปลี่ยนหลักทรัพย์หลากหลายประเภทในตลาดทั่วโลกได้อย่างง่าย <br />
+                  ดายและปลอดภัย 
+                  เพื่อช่วยให้นักลงทุนทุก ๆ <br /> คนมีพอร์ตที่เติบโตงอกเงยและประสบความสำเร็จด้านการเงินตามที่ตัวเองตั้งเป้าไว้ได้ง่ายขึ้นกว่าเดิม <br />
                 </p>
-                <p>
-                  โดยเรามีข้อมูลคุณแพลนด้วยสินลักษณ์ของ Pi Financial 
-                  ที่ข่าวของเราและการให้บริการทองในการเป็นเครื่องทำผลประกันการนำเอาปัจจัยในการเฉลิมฉลองการลงทุนได้นะการเลือกรายที่ก็ในการถูกได้ในขณะ
-                  ก้าเสะและพร ดั้งผิดผิดสร้างความน่า ฯ
-                </p>
-                <p>
-                  หมุนพอร์ตการของโครงการและสร้างความส่งลักษณ์การเงินทุนที่ดึงดูกมียังไม่ได้ไรดำมการใหม่
-                </p>
+                
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* วิสัยทัศน์ Section */}
-      <section className="py-20 bg-black text-white relative overflow-hidden">
-        {/* Floating Gold Coins */}
-        <div className="absolute top-20 right-32 w-16 h-16 bg-yellow-400 rounded-full"></div>
-        <div className="absolute top-40 right-20 w-12 h-12 bg-yellow-300 rounded-full"></div>
-        <div className="absolute top-32 right-60 w-10 h-10 bg-yellow-500 rounded-full"></div>
-        <div className="absolute bottom-40 right-40 w-20 h-20 bg-yellow-400 rounded-full"></div>
-        <div className="absolute bottom-20 right-24 w-14 h-14 bg-yellow-300 rounded-full"></div>
-        <div className="absolute bottom-32 right-72 w-8 h-8 bg-yellow-500 rounded-full"></div>
-        <div className="absolute top-60 right-16 w-18 h-18 bg-yellow-400 rounded-full"></div>
-        
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - Content */}
-            <div>
-              <h2 className="text-4xl font-bold mb-8">วิสัยทัศน์</h2>
-              <div className="space-y-6 text-lg leading-relaxed">
-                <p>
-                  สร้างสรรค์นวัตกรรมใหม่สำหรับการลงทุนที่ทุกคนเข้าถึงได้อย่างง่าย
-                </p>
-                <p>
-                  และช่วยให้นักลงทุนทุกประเภทสามารถลงทุนอย่างมีการป้องกันดูแลเพื่อสร้าง
-                  ประสิทธิภาพ สำหรับใครก็ตามที่ร่วมกลุ่มลงทุนได้อย่างปลอดภัย
-                </p>
-              </div>
-            </div>
-            
-            {/* Right Side - Executive Team Photo */}
-            <div className="flex justify-center">
-              <div className="bg-gradient-to-br from-teal-600 to-blue-600 rounded-2xl p-6">
-                {/* Executive Team Photo Placeholder */}
-                <div className="w-80 h-64 bg-teal-500 rounded-xl">
-                  {/* รูปทีมผู้บริหาร 5 คน */}
-                </div>
-              </div>
-            </div>
-          </div>
+      {/*ำพเหำพเำพเาย */}
+      <section className="py-20 bg-black text-white relative overflow-visible">
+      <div className="relative max-w-7xl mx-auto flex items-center justify-between px-6 lg:px-12">
+    
+      {/* ฝั่งข้อความ */}
+      <div className="w-full lg:w-1/2 mb-10">
+        <h2 className="text-4xl font-bold mb-4">วิสัยทัศน์</h2>
+        <p className="text-[17px]  leading-relaxed font-normal">
+        สร้างสังคมไทยให้เป็นสังคมทางการเงินที่แข็งแกร่ง <br />
+        และเท่าเทียมเพื่อให้ทุกคนสามารถเข้าถึงบริการทางการลงทุนได้ง่ายและ <br />
+        มีประสิทธิภาพ 
+        สามารถไปถึงเป้าหมายความมั่งคั่งตามที่ได้วางแผนไว้
+        </p>
+      </div>
+    
+     <div className="relative w-full lg:w-1/2 h-[400px] mt-10 lg:mt-0 overflow-visible">
+      
+      <img
+        src="/image/coinremovebg-preview.png"
+        alt="coin"
+        className="absolute top-[-160px] right-[-40px] w-[1500px] z-0"
+      />
+      
+        <div className="w-[780px] h-[380px] bg-white rounded-3xl z-10 relative overflow-hidden ml-20 mb-10">
+          <img
+            src="/image/upscalemediapiimg.png"
+            alt="team"
+            className="w-full h-full bg-cover bg-center bg-no-repeat rounded-3xl"
+          />
         </div>
+      </div>
+      </div>
       </section>
 
-      {/* พันธกิจ Section */}
-      <section className="py-20 bg-gray-50">
+
+     
+      <section className="py-20 bg-gray-50 h-160">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Side - Meeting Photo */}
             <div className="relative">
-              <div className="bg-gradient-to-br from-purple-200 to-purple-100 rounded-2xl p-6 relative">
-                {/* IDEA TRADE Watermark */}
-                <div className="absolute top-6 left-6 z-10">
-                  <h3 className="text-4xl font-bold text-purple-400 opacity-60">IDEA</h3>
-                  <h4 className="text-2xl font-bold text-purple-400 opacity-60">TRADE</h4>
-                </div>
-                
-                {/* Meeting Photo Placeholder */}
-                <div className="w-full h-64 bg-purple-300 rounded-xl">
-                  {/* รูปการประชุม 3 คน */}
+              <div className=" rounded-2xl p-6 relative">
+                <div className="w-full h-full rounded-xl">
+                  <img
+                    src="/image/upscaleteam1img (1).jpeg"
+                    alt="team1"
+                    className="w-full h-full bg-cover bg-center bg-no-repeat rounded-3xl"
+                  />
                 </div>
               </div>
             </div>
             
             {/* Right Side - Mission Content */}
             <div>
-              <h2 className="text-3xl font-bold mb-6 text-gray-800">พันธกิจ</h2>
-              <div className="space-y-4 text-gray-600 leading-relaxed text-sm">
+              <h2 className="text-3xl font-bold mb-6 text-black">พันธกิจ</h2>
+              <div className="space-y-4 text-gray-900 leading-relaxed text-[17px] font-normal">
                 <p>
-                  เปิดให้การให้ความช่วยเหลือในการค้นหาการลงทุนที่เหมาะสมกับลูกค้าของการไดการ
-                </p>
-                <p>
-                  ประสานใบการยองหลายทุนภาคโปรดได้ผมลิงดีพี่อิด้าง
-                </p>
-                <p>
-                  พร้อมนำยอมมากระหว่างความการณ์เดินทำดีเงินมานักลงทุนมีโฮมมูเสร์
-                  ร่วยสนลันอนาคร
+                  เปิดโอกาสให้ทุกคนสามารถเข้าถึงการลงทุนในหลักทรัพย์หลากหลาย <br />ประเภทในตลาดทุนสำคัญทั่วโลกได้แบบไร้ขีดจำกัด <br />
+                   พร้อมนำเสนอสาระความรู้ทางการเงินที่เข้าใจง่ายจากผู้เชี่ยวชาญตัว <br />จริงในอุตสาหกรรม
                 </p>
               </div>
             </div>
