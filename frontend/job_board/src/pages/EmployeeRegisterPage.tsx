@@ -7,6 +7,7 @@ const EmployeeRegisterPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [role, setRole] = useState('CANDIDATE');
     const [error, setError] = useState('');
     const [showPass, setShowPass] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false); // State สำหรับช่องยืนยันรหัสผ่าน
@@ -26,7 +27,7 @@ const EmployeeRegisterPage = () => {
                 name: name,
                 email: email,
                 password: password,
-                role: 'CANDIDATE'
+                role: role,
             };
 
             await api.post('/auth/register', registrationData);
@@ -56,12 +57,51 @@ const EmployeeRegisterPage = () => {
                 {/* <p className="mt-2 text-lg font-bold">สำหรับผู้หางาน</p> */}
                 <form
                     onSubmit={handleRegister}
-                    //action=""
+                    
                     className="mt-8 flex w-full max-w-[400px] flex-col gap-8"
                 >
-                    <div className="relative h-fit w-full text-stone-500 placeholder:text-stone-500">
+                    <div className="space-y-3">
+                        <label className="font-bold text-gray-700">คุณคือ:</label>
+                        <div className="flex items-center gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="role"
+                                    value="CANDIDATE"
+                                    checked={role === 'CANDIDATE'}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    className="h-4 w-4"
+                                />
+                                ผู้สมัครงาน
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="role"
+                                    value="COMPANY"
+                                    checked={role === 'COMPANY'}
+                                    onChange={(e) => setRole(e.target.value)}
+                                    className="h-4 w-4"
+                                />
+                                บริษัท
+                            </label>
+                        </div>
+                    </div>
+                    <div className="relative h-fit w-full text-stone-500">
                         <input
                             type="text"
+                            placeholder={role === 'CANDIDATE' ? 'ชื่อ - นามสกุล' : 'ชื่อบริษัท'}
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                            className="w-full rounded-lg bg-stone-200 py-4 pl-12"
+                        />
+                        <i className="fa-solid fa-user absolute top-1/2 left-4 -translate-y-1/2 text-xl"></i>
+                    </div>
+
+                    <div className="relative h-fit w-full text-stone-500 placeholder:text-stone-500">
+                        <input
+                            type="email"
                             placeholder="อีเมล"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}

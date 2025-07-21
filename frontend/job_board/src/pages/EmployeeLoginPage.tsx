@@ -4,11 +4,12 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
+import ErrorModal from '../components/ErrorModal';
 
 interface UserPayload {
-  id: string;
-  profileId: string;
-  role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
+    id: string;
+    profileId: string;
+    role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
 }
 
 const EmployeeLoginPage = () => {
@@ -17,17 +18,18 @@ const EmployeeLoginPage = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate(); //สำหรับเปลี่ยนหน้า
     const [showPass, setShowPass] = useState(false);
-    const {login} = useAuth();
+    const { login } = useAuth();
     const { login: appLogin } = useAuth();
     const [newUser, setNewUser] = useState<any | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-    const handleLogin = async (e: React.FormEvent) =>{
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault(); //ป้องกันไม่ให้หน้าเว็บรีโหลด
         setError(''); //ล้าง error เก่า
 
         try {
-            const response = await api.post('/auth/login', {email, password});
-            const {token} = response.data;
+            const response = await api.post('/auth/login', { email, password });
+            const { token } = response.data;
             //localStorage.setItem('token',token);
             login(token);
             const decodedToken: { user: UserPayload } = jwtDecode(token);
@@ -40,45 +42,67 @@ const EmployeeLoginPage = () => {
                 navigate('/');
             }
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 'เกิดข้อผิดพลาดในการล็อกอิน';
+            const errorMessage =
+                err.response?.data?.message || 'เกิดข้อผิดพลาดในการล็อกอิน';
             setError(errorMessage);
-            console.error("Login failed:", err)
+            setIsModalOpen(true);
+            console.error('Login failed:', err);
         }
-    }
+    };
 
     const googleLogin = useGoogleLogin({
-      flow: 'auth-code', // สำคัญมาก! ต้องใช้ Flow นี้เพื่อให้ได้ Authorization Code
-      onSuccess: async (codeResponse) => {
-        setError('');
-        try {
-          // ส่ง 'code' ที่ได้จาก Google ไปที่ Backend API ตัวแรก (/google/callback)
-          const response = await api.post('/auth/google/callback', {
-            code: codeResponse.code,
-          });
+        flow: 'auth-code', //สำคัญมาก! ต้องใช้ Flow นี้เพื่อให้ได้ Authorization Code
+        onSuccess: async codeResponse => {
+            setError('');
+            try {
+                // ส่ง 'code' ไปที่ Backend
+                const response = await api.post('/auth/google', {
+                    code: codeResponse.code,
+                });
 
-          if (response.data.isNewUser) {
-            // ถ้าเป็นผู้ใช้ใหม่: เก็บข้อมูลไว้ใน state เพื่อแสดงหน้าเลือก Role
-            setNewUser(response.data.googleProfile);
-          } else {
-            // ถ้าเป็นผู้ใช้เก่า: ล็อกอินได้เลย
-            appLogin(response.data.token);
-            alert('Google Login สำเร็จ!');
-            navigate('/profile');
-          }
-        } catch (error) {
-          console.error("Google auth failed:", error);
-          setError('การยืนยันตัวตนกับ Google ล้มเหลว');
-        }
-      },
-      onError: () => setError('ไม่สามารถล็อกอินด้วย Google ได้'),
+                // รับ Token ของแอปเรากลับมาแล้วล็อกอิน
+                const { token } = response.data;
+                appLogin(token); // appLogin คือ login จาก useAuth()
+
+                // นำทางไปยังหน้าโปรไฟล์
+                navigate('/profile');
+            } catch (error) {
+                console.error('Google auth failed:', error);
+                setError('การยืนยันตัวตนกับ Google ล้มเหลว');
+            }
+        },
+        onError: () => setError('ไม่สามารถล็อกอินด้วย Google ได้'),
     });
-    
+    const handleLineLogin = () => {
+        //สร้าง state token แบบสุ่มเพื่อป้องกัน CSRF
+        const state = Math.random().toString(36).substring(2);
+        sessionStorage.setItem('line_login_state', state);
+
+        const lineLoginUrl = new URL(
+            'https://access.line.me/oauth2/v2.1/authorize'
+        );
+        lineLoginUrl.searchParams.append('response_type', 'code');
+        lineLoginUrl.searchParams.append('client_id', '2007686516');
+        lineLoginUrl.searchParams.append(
+            'redirect_uri',
+            'http://localhost:5173/auth/line/callback'
+        );
+        lineLoginUrl.searchParams.append('state', state);
+        lineLoginUrl.searchParams.append('scope', 'profile openid email');
+
+        //นำทางผู้ใช้ไปยังหน้า LINE Login
+        window.location.href = lineLoginUrl.toString();
+    };
 
     return (
         <main className="flex h-screen w-full">
-            <section className="flex lg:w-1/2 w-full flex-col items-center justify-center bg-white p-4 min-w-[300px]">
-                <Link to={'/'} className="absolute top-8 left-8" >
-                    <img src={'/logo-2.png'} alt="login-ideatrade" className="w-[140px] h-[140px]" />
+            <section className="flex w-full min-w-[300px] flex-col items-center justify-center bg-white p-4 lg:w-1/2">
+                <Link to={'/'} className="absolute top-8 left-8">
+                    <img
+                        src={'/logo-2.png'}
+                        alt="login-ideatrade"
+                        className="h-[140px] w-[140px]"
+                    />
                 </Link>
                 <h1 className="text-4xl font-bold">เข้าสู่ระบบ</h1>
                 {/* <p className="mt-2 text-lg font-bold">สำหรับผู้หางาน</p> */}
@@ -92,7 +116,7 @@ const EmployeeLoginPage = () => {
                             type="email"
                             placeholder="อีเมล"
                             value={email} //เพิ่ม value เพื่อให้ React สามารถควบคุมข้อมูลในฟอร์มได้อย่างสมบูรณ์
-                            onChange={(e) => setEmail(e.target.value)} //เพิ่ม onChange
+                            onChange={e => setEmail(e.target.value)} //เพิ่ม onChange
                             className="outline-dark w-full rounded-lg bg-stone-200 py-4 pl-16 outline-offset-4"
                         />
                         <i className="fa-solid fa-envelope absolute top-1/2 left-5 -translate-y-1/2 text-xl"></i>
@@ -102,7 +126,7 @@ const EmployeeLoginPage = () => {
                             type={showPass ? 'text' : 'password'}
                             placeholder="รหัสผ่าน"
                             value={password} //เพิ่ม value เพื่อให้ React สามารถควบคุมข้อมูลในฟอร์มได้อย่างสมบูรณ์
-                            onChange={(e) => setPassword(e.target.value)} //เพิ่ม onChange
+                            onChange={e => setPassword(e.target.value)} //เพิ่ม onChange
                             className="outline-dark w-full rounded-lg bg-stone-200 py-4 pl-16 outline-offset-4"
                         />
                         <i className="fa-solid fa-lock absolute top-1/2 left-5 -translate-y-1/2 text-xl"></i>
@@ -125,35 +149,54 @@ const EmployeeLoginPage = () => {
                         เข้าสู่ระบบ
                     </button>
                 </form>
-                <button className="mt-10 flex w-full max-w-[400px] cursor-pointer items-center gap-8 rounded-lg bg-stone-200 px-4 py-3 transition-all hover:scale-[102%]">
-                    <div className="h-[30px] w-[30px] rounded-lg bg-white">
+                <button
+                    onClick={handleLineLogin}
+                    type="button"
+                    className="mt-10 flex w-full max-w-[400px] cursor-pointer items-center gap-8 rounded-lg bg-stone-200 px-4 py-3 transition-all hover:scale-[102%]"
+                >
+                    <div className="flex h-[30px] w-[30px] items-center justify-center rounded-lg bg-white">
                         <i className="fa-brands fa-line text-4xl text-green-500"></i>
                     </div>
                     เข้าสู่ระบบด้วย LINE
                 </button>
-                <button 
-                    onClick={() => googleLogin()} 
-                    type = "button"
-                    className="mt-4 flex w-full max-w-[400px] cursor-pointer items-center gap-8 rounded-lg bg-stone-200 px-4 py-3 transition-all hover:scale-[102%]">
+                <button
+                    onClick={() => googleLogin()}
+                    type="button"
+                    className="mt-4 flex w-full max-w-[400px] cursor-pointer items-center gap-8 rounded-lg bg-stone-200 px-4 py-3 transition-all hover:scale-[102%]"
+                >
                     <i className="fa-brands fa-google text-3xl text-red-500"></i>
                     เข้าสู่ระบบด้วย GOOGLE
                 </button>
-                <p className="mt-12">
-                    ยังไม่มีบัญชี ?{' '}
+                <div className="mt-12 text-center text-sm">
                     <Link
-                        to={'/auth/employee/register'}
-                        className="text-dark cursor-pointer underline"
+                        to="/forgot-password"
+                        className="font-semibold text-teal-600 hover:underline"
                     >
-                        ลงทะเบียน
+                        ลืมรหัสผ่าน?
                     </Link>
-                </p>
+                    <p className="mt-2 text-gray-500">
+                        ยังไม่มีบัญชี ?{' '}
+                        <Link
+                            to={'/auth/employee/register'}
+                            className="font-semibold text-teal-600 hover:underline"
+                        >
+                            ลงทะเบียน
+                        </Link>
+                    </p>
+                </div>
             </section>
-            <section className="h-full w-1/2 bg-black hidden lg:inline-block">
+            <section className="hidden h-full w-1/2 bg-black lg:inline-block">
                 <img
                     src="/public/image/login-img.jpg"
                     className="h-full w-full object-cover object-top-left"
                 />
             </section>
+            <ErrorModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="เกิดข้อผิดพลาด"
+                message={error}
+            />
         </main>
     );
 };

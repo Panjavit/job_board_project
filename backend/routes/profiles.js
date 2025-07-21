@@ -30,6 +30,21 @@ router.get(
           certificateFiles: true,
           contactFiles: true,
           internshipApplications: true,
+          interests: {
+            include: {
+              company: {
+                select: {
+                  id: true,
+                  companyName: true,
+                  logoUrl: true,
+                  businessTypeName: true,
+                  province: true,
+                  registeredCapital: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+          },
         },
       });
 
@@ -67,6 +82,7 @@ router.patch(
         education,
         videoUrl,
         videoDescription,
+        portfolioUrl,
       } = req.body;
 
       // ตรวจสอบแต่ละฟิลด์ ถ้ามีค่าส่งมาถึงจะเพิ่มเข้าไปใน object ที่จะใช้อัปเดต
@@ -85,6 +101,9 @@ router.patch(
       if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
       if (videoDescription !== undefined)
         dataToUpdate.videoDescription = videoDescription;
+       if (portfolioUrl !== undefined) {
+        dataToUpdate.portfolioUrl = portfolioUrl;
+      }
 
       // ใช้ dataToUpdate ที่สร้างขึ้นมาใหม่ในการอัปเดต
       const updatedProfile = await prisma.candidateProfile.update({
@@ -170,15 +189,51 @@ router.put(
   }
 );
 
+router.post(
+  "/company/me/logo",
+  protect,
+  authorize("COMPANY"),
+  upload.single("file"), // ใช้ multer middleware รับไฟล์เดียวชื่อ 'file'
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "กรุณาแนบไฟล์รูปภาพ" });
+      }
+
+      const logoUrl = `/uploads/${req.file.filename}`;
+
+      const updatedProfile = await prisma.companyProfile.update({
+        where: { id: req.user.profileId },
+        data: { logoUrl: logoUrl },
+      });
+
+      res.json({
+        message: "อัปโหลดโลโก้สำเร็จ",
+        profile: updatedProfile,
+      });
+    } catch (error) {
+      console.error("Error uploading company logo:", error);
+      res.status(500).send("Server Error");
+    }
+  }
+);
+
 // @route   GET /api/profiles/company/me (Get current logged-in company's profile)
 router.get("/company/me", protect, authorize("COMPANY"), async (req, res) => {
-  console.log(
-    ` Handler for GET /api/profiles/company/me was matched! User ID: ${req.user.id} ---`
-  );
   try {
     const profile = await prisma.companyProfile.findUnique({
       where: { id: req.user.profileId },
+      include: {
+        user: {
+          select: {
+            email: true,
+          },
+        },
+        emails: true,
+        phones: true,
+      },
     });
+
     if (!profile) {
       return res.status(404).json({ message: "ไม่พบโปรไฟล์บริษัท" });
     }
@@ -192,13 +247,39 @@ router.get("/company/me", protect, authorize("COMPANY"), async (req, res) => {
 // @route   PUT /api/profiles/company/me (Update current logged-in company's profile)
 router.put("/company/me", protect, authorize("COMPANY"), async (req, res) => {
   try {
-    const { companyName, about, contactInstructions } = req.body;
+    const {
+      companyName,
+      about,
+      location,
+      recruiterName,
+      recruiterPosition,
+      additionalContactInfo,
+      province,
+      registrationNumber,
+      legalName,
+      companyType,
+      businessTypeName,
+      registeredCapital,
+      videoUrl,
+    } = req.body;
     const updateProfile = await prisma.companyProfile.update({
       where: { id: req.user.profileId },
       data: {
         companyName: companyName,
         about: about,
-        contactInstructions: contactInstructions,
+        location: location,
+        recruiterName: recruiterName,
+        recruiterPosition: recruiterPosition,
+        additionalContactInfo,
+        province,
+        registrationNumber,
+        legalName,
+        companyType,
+        businessTypeName,
+        registeredCapital: registeredCapital
+          ? parseFloat(registeredCapital)
+          : null,
+        videoUrl: videoUrl,
       },
     });
     res.json(updateProfile);
@@ -287,5 +368,40 @@ router.get(
     }
   }
 );
+
+// @route   GET /api/profiles/company/:id
+router.get("/company/:id", async (req, res) => {
+  try {
+    const profile = await prisma.companyProfile.findUnique({
+      where: { id: req.params.id },
+      select: {
+        companyName: true,
+        about: true,
+        location: true,
+        logoUrl: true,
+        recruiterName: true,
+        recruiterPosition: true,
+        additionalContactInfo: true,
+        province: true,
+        registrationNumber: true,
+        legalName: true,
+        companyType: true,
+        businessTypeName: true,
+        registeredCapital: true,
+        videoUrl: true,
+        emails: { select: { email: true } },
+        phones: { select: { phone: true } },
+      },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ message: "ไม่พบโปรไฟล์บริษัท" });
+    }
+    res.json(profile);
+  } catch (error) {
+    console.error("Error fetching public company profile:", error);
+    res.status(500).send("Server Error");
+  }
+});
 
 export default router;

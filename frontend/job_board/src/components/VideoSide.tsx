@@ -38,10 +38,6 @@ const VideoSide: React.FC<VideoSideProps> = ({ currentProfile, onUpdate, onClose
     return (
         <form onSubmit={handleSubmit} className="h-full w-full flex flex-col">
             <h1 className="text-2xl font-bold">เพิ่มวิดีโอแนะนำตัวเอง 5-10 นาที</h1>
-            <li>ไปที่หน้าวิดีโอใน YouTube</li>
-                <li>คลิกปุ่ม "แชร์" (Share)</li>
-                <li>เลือก "ฝัง" (Embed)</li>
-                <li>ในโค้ดที่ปรากฏขึ้นมา ให้คัดลอกเฉพาะ URL ที่อยู่ใน src="..."</li>
             <div className="flex-grow flex flex-col gap-6 mt-6">
                 <div>
                     <label htmlFor="videoUrl" className="text-lg font-bold">ลิงก์วิดีโอ (อัปโหลดคลิปลง YouTube ตั้งค่าให้คนที่มีลิงค์สามารถดูได้)</label>

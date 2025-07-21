@@ -26,6 +26,7 @@ interface CandidateProfile {
     experience: string | null;
     projects: string | null;
     achievements: string | null;
+    portfolioUrl?: string | null;
 }
 
 //Interface สำหรับส่งข้อมูลให้ Header
@@ -104,7 +105,7 @@ const StudentDetailPage: React.FC = () => {
         try {
             await api.post(`/interactions/interest/${studentId}`, {
                 contactInstructions:
-                    'บริษัทฯ ได้รับข้อมูลการสมัครของท่านเรียบร้อยแล้ว ขอขอบคุณที่ท่านให้ความสนใจในการร่วมงานกับเรา ทั้งนี้ เจ้าหน้าที่ฝ่ายบุคคลจะติดต่อท่านกลับไปอีกครั้งเพื่อแจ้งผลการพิจารณาในลำดับถัดไป',
+                    'Email: yanisa.ph@pi.financial \nPhone: 064-494-7456',
             });
             alert('แสดงความสนใจสำเร็จ!');
             setIsInterested(true);
@@ -145,13 +146,7 @@ const StudentDetailPage: React.FC = () => {
         <button
             onClick={handleShowInterest}
             disabled={isInterested || isSubmitting}
-            className={`
-            w-48 rounded-lg px-4 py-3 text-base font-bold text-white transition-all
-            bg-teal-500 hover:bg-teal-600
-            ${isInterested ? 'cursor-not-allowed bg-green-600' : ''}
-            ${isSubmitting ? 'cursor-wait bg-gray-500' : ''}
-            ${!isInterested && !isSubmitting ? 'bg-teal-500 hover:bg-teal-600' : ''}
-        `}
+            className={`w-48 rounded-lg bg-teal-500 px-4 py-3 text-base font-bold text-white transition-all hover:bg-teal-600 ${isInterested ? 'cursor-not-allowed bg-green-600' : ''} ${isSubmitting ? 'cursor-wait bg-gray-500' : ''} ${!isInterested && !isSubmitting ? 'bg-teal-500 hover:bg-teal-600' : ''} `}
         >
             {isSubmitting
                 ? 'กำลังส่ง...'
@@ -163,17 +158,39 @@ const StudentDetailPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <ProfileHeader user={userDataForHeader} completionRate={100} actionsSlot={interestButton} />
+            <ProfileHeader
+                user={userDataForHeader}
+                completionRate={100}
+                actionsSlot={interestButton}
+            />
 
             <div className="mx-auto max-w-7xl px-6 py-6">
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                    {/* START: แก้ไข/เพิ่มเติมเนื้อหาในส่วนนี้ทั้งหมด */}
                     {/* ฝั่งซ้าย */}
                     <div className="space-y-6">
                         <ProfileCard
                             title="ข้อมูลส่วนตัว"
                             content={profile.bio}
                         />
+                        <ProfileCard title="ผลงาน (Portfolio)">
+                            {profile.portfolioUrl ? (
+                                <a
+                                    href={profile.portfolioUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                >
+                                    <i className="fa-solid fa-link text-lg"></i>
+                                    <span className="truncate">
+                                        {profile.portfolioUrl}
+                                    </span>
+                                </a>
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    ไม่มีลิงก์ผลงาน
+                                </p>
+                            )}
+                        </ProfileCard>
                         <ProfileCard title="ประสบการณ์การทำงานของคุณ">
                             {profile.workHistory &&
                                 profile.workHistory.length > 0 && (

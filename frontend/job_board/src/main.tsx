@@ -12,55 +12,44 @@ import { AuthProvider } from './context/AuthContext.tsx';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import CompanyPage from './pages/CompanyPage.tsx';
 import StudentDetailPage from './pages/StudentDetailPage.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+import LineCallbackPage from './pages/LineCallbackPage.tsx';
+import PublicCompanyProfilePage from './pages/PublicCompanyProfilePage.tsx';
+import ChangePasswordPage from './pages/ChangePasswordPage.tsx';
+import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx';
 
 const router = createBrowserRouter([
-    {
-        path: '/',
-        element: (
-            <MainLayout>
-                <App />
-            </MainLayout>
-        ),
-    },
+    { path: '/', element: <MainLayout><App /></MainLayout> },
+    { path: '/about', element: <MainLayout><AboutPage /></MainLayout> },
+    { path: '/auth/employee/login', element: <EmployeeLoginPage /> },
+    { path: '/auth/employee/register', element: <EmployeeRegisterPage /> },
+    { path: '/students/:studentId', element: <MainLayout><StudentDetailPage /></MainLayout> },
+    { path: '/company/:companyId', element: <MainLayout><PublicCompanyProfilePage /></MainLayout> },
+    { path: '/auth/line/callback', element: <LineCallbackPage /> },
+    { path: '/forgot-password', element: <ForgotPasswordPage /> },
     {
         path: '/profile',
         element: (
-            <MainLayout>
-                <ProfilePage />
-            </MainLayout>
+            <ProtectedRoute>
+                <MainLayout><ProfilePage /></MainLayout>
+            </ProtectedRoute>
         ),
     },
     {
         path: '/company-profile',
         element: (
-            <MainLayout>
-                <CompanyPage />
-            </MainLayout>
+            <ProtectedRoute>
+                <MainLayout><CompanyPage /></MainLayout>
+            </ProtectedRoute>
         )
     },
     {
-        path: '/about',
+        path: '/change-password',
         element: (
-            <MainLayout>
-                <AboutPage />
-            </MainLayout>
-        ),
-    },
-    {
-        path: '/auth/employee/login',
-        element: <EmployeeLoginPage />,
-    },
-    {
-        path: '/auth/employee/register',
-        element: <EmployeeRegisterPage />,
-    },
-    {
-        path: '/students/:studentId', //ใช้studentIdเป็นพารามิเตอร์
-        element: (
-            <MainLayout>
-                <StudentDetailPage />
-            </MainLayout>
-        ),
+            <ProtectedRoute>
+                <MainLayout><ChangePasswordPage /></MainLayout>
+            </ProtectedRoute>
+        )
     },
 ]);
 

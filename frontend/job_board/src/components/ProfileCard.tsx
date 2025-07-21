@@ -6,9 +6,10 @@ interface ProfileCardProps {
   placeholder?: string;
   onEditClick?: () => void;
   children?: React.ReactNode;
+  actionsSlot?: React.ReactNode;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ title, content, placeholder, onEditClick, children }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ title, content, placeholder, onEditClick, children, actionsSlot }) => {
   //ตรวจสอบทั้ง children และ content
   const hasData = children || (content && content.trim() !== '');
 
@@ -18,7 +19,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ title, content, placeholder, 
         <h3 className="font-bold text-gray-800 text-base">{title}</h3>
         
         
-        {onEditClick && (
+        
+        {actionsSlot ? (
+          <div>{actionsSlot}</div> // ถ้ามี actionsSlot ส่งมา ให้แสดงผล actionsSlot
+        ) : onEditClick ? (
+          // ถ้าไม่มี actionsSlot แต่มี onEditClick ให้แสดงปุ่มแก้ไขแบบเดิม
           <button
             onClick={onEditClick}
             className="bg-teal-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-teal-600 transition-transform duration-200 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
@@ -28,7 +33,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ title, content, placeholder, 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
             </svg>
           </button>
-        )}
+        ) : null}
       </div>
 
       <div className="flex-grow">

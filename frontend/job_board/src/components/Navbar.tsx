@@ -1,87 +1,140 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState, useEffect, useRef } from 'react';
+import LoginAlertModal from './LoginAlertModal';
 
 const Navbar = () => {
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const { isAuthenticated, user, logout } = useAuth();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const profilePath =
-        user?.role === 'COMPANY' ? '/company-profile' : '/profile';
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [dropdownRef]);
 
     const handleLogout = () => {
-        logout(); //เรียกฟังก์ชัน logout จาก AuthContext
+        logout();
         navigate('/auth/employee/login');
+    };
+
+    const handleProfileClick = () => {
+        if (isAuthenticated) {
+            const profilePath =
+                user?.role === 'COMPANY' ? '/company-profile' : '/profile';
+            navigate(profilePath);
+        } else {
+            setIsModalOpen(true);
+        }
     };
 
     return (
         <div className="bg-[#00a991]">
-            <nav className="relative container mx-auto flex h-auto max-w-[1800px] flex-col p-10 md:h-[150px] md:flex-row md:items-center md:justify-between">
-                <img
-                    src="/ideatrade.svg"
-                    alt="ideatrade logo"
-                    className="mr-4 h-31 w-41 pr-4"
-                />
-                <div className="my-5 mr-68 flex flex-col pr-68 text-[26px] font-bold md:flex-row">
-                    <Link
-                        to={'/'}
-                        className={`p-12 text-white transition-all hover:text-black hover:underline ${pathname === '/' && 'after:scale-100'}`}
-                    >
-                        ค้นหานักศึกษาฝึกงาน
-                    </Link>
-                    <Link
-                        to={profilePath} // 4. ใช้ตัวแปร profilePath ที่สร้างขึ้น
-                        className={`p-12 text-white transition-all hover:text-black hover:underline ${
-                            (pathname === '/profile' ||
-                                pathname === '/company-profile') &&
-                            'after:scale-100'
-                        }`}
-                    >
-                        โปรไฟล์
-                    </Link>
-                    <Link
-                        to={'/about'}
-                        className={`p-12 text-white transition-all hover:text-black hover:underline ${pathname === '/about' && 'after:scale-100'}`}
-                    >
-                        เกี่ยวกับเรา
-                    </Link>
+            <nav className="container mx-auto flex h-auto max-w-[1800px] flex-col items-center justify-between p-6 md:h-[100px] md:flex-row">
+                {/* ส่วนโลโก้และเมนู (จัดชิดซ้าย) */}
+                <div className="flex flex-col items-center md:flex-row">
+                    <img
+                        src="/ideatrade.svg"
+                        alt="ideatrade logo"
+                        className="h-12 w-auto"
+                    />
+                    <div className="my-4 flex flex-col items-center gap-4 text-lg font-bold md:my-0 md:ml-10 md:flex-row md:gap-8">
+                        <Link
+                            to={'/'}
+                            className={`text-white transition-all hover:text-black hover:underline ${pathname === '/' && 'after:scale-100'}`}
+                        >
+                            ค้นหานักศึกษาฝึกงาน
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={handleProfileClick}
+                            className={`text-white transition-all hover:text-black hover:underline ${
+                                (pathname === '/profile' ||
+                                    pathname === '/company-profile') &&
+                                'after:scale-100'
+                            }`}
+                        >
+                            โปรไฟล์
+                        </button>
+                        <Link
+                            to={'/about'}
+                            className={`text-white transition-all hover:text-black hover:underline ${pathname === '/about' && 'after:scale-100'}`}
+                        >
+                            เกี่ยวกับเรา
+                        </Link>
+                    </div>
                 </div>
-                <div className="my-5 flex flex-col md:flex-row md:items-center md:gap-4">
-                    {isAuthenticated ? (
-                        <>
-                            {/* เงื่อนไข: ถ้าเป็น Candidate ให้แสดงชื่อ */}
-                            {user?.role === 'CANDIDATE' && (
-                                <span className="font-semibold text-white">
-                                    {/* ดึงเฉพาะชื่อแรกมาแสดง */}
-                                    สวัสดี, {user.name?.split(' ')[0]}
-                                </span>
-                            )}
 
-                            {/* ปุ่มออกจากระบบ (เหมือนเดิม) */}
-                            <div className="my-2 md:mx-0">
-                                <button
-                                    onClick={handleLogout}
-                                    className="transform rounded-full bg-black px-6 py-3 text-xl text-white transition-all hover:bg-gray-800"
-                                >
-                                    ออกจากระบบ
-                                </button>
-                            </div>
-                        </>
+                {/* ส่วนของผู้ใช้ (จัดชิดขวา) */}
+                <div className="flex items-center gap-4">
+                    {isAuthenticated ? (
+                        <div
+                            className="relative flex items-center gap-3"
+                            ref={dropdownRef}
+                        >
+                            {/* แยกข้อความออกมา */}
+                            <span className="font-semibold whitespace-nowrap text-white">
+                                สวัสดี, {user?.name?.split(' ')[0]}
+                            </span>
+
+                            {/* ปุ่มฟันเฟือง */}
+                            <button
+                                onClick={() =>
+                                    setIsDropdownOpen(!isDropdownOpen)
+                                }
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-white transition-colors hover:bg-black/20"
+                                aria-label="เมนูผู้ใช้"
+                            >
+                                <i className="fa-solid fa-gear text-lg"></i>
+                            </button>
+
+                            {/* เมนู Dropdown (เหมือนเดิม) */}
+                            {isDropdownOpen && (
+                                <div className="absolute top-full right-0 z-50 mt-2 w-48 rounded-md bg-white py-1 shadow-lg">
+                                    <Link
+                                        to="/change-password"
+                                        onClick={() => setIsDropdownOpen(false)}
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    >
+                                        เปลี่ยนรหัสผ่าน
+                                    </Link>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                                    >
+                                        ออกจากระบบ
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     ) : (
-                        //ถ้ายังไม่ล็อกอิน ให้แสดงปุ่ม Login ทั้งสอง
-                        <>
-                            <div className="my-2 md:mx-5">
-                                <Link
-                                    to={'/auth/employee/login'}
-                                    className="transform rounded-full bg-white px-6 py-3 text-xl transition-all hover:bg-black hover:text-white"
-                                >
-                                    เข้าสู่ระบบ
-                                </Link>
-                            </div>
-                        </>
+                        <Link
+                            to={'/auth/employee/login'}
+                            className="transform rounded-full bg-white px-5 py-2 text-base transition-all hover:bg-black hover:text-white"
+                        >
+                            เข้าสู่ระบบ
+                        </Link>
                     )}
                 </div>
             </nav>
+
+            <LoginAlertModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
         </div>
     );
 };

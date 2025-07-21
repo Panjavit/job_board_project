@@ -12,6 +12,8 @@ import workHistoryRoutes from './routes/workHistory.js';
 import certificateRoutes from './routes/certificateFiles.js';
 import contactFileRoutes from './routes/contactFile.js';
 import applicationRoutes from './routes/applications.js';
+import contactRoutes from './routes/contacts.js';
+
 
 //(สร้างแอปและตัวเชื่อมต่อฐานข้อมูล)
 const app = express();
@@ -38,6 +40,8 @@ app.use('/api/work-history', workHistoryRoutes);
 app.use('/api/certificate-files', certificateRoutes);
 app.use('/api/contact-files', contactFileRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/contacts', contactRoutes);
+
 
 const PORT = process.env.PORT || 5001; //http://localhost:5001
 app.listen(PORT, () =>{

@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { Link } from 'react-router-dom';
+import ResumeAnalysisCard from '../components/ResumeAnalysisCard';
+import PortfolioSide from '../components/PortfolioSide';
 
 import {
     ProfileHeader,
@@ -43,6 +46,19 @@ interface CandidateProfile {
     major: string | null;
     studyYear: number | null;
     internshipApplications: any[];
+    interests?: {
+        createdAt: string;
+        company: {
+            id: string;
+            companyName: string;
+            logoUrl: string | null;
+            businessTypeName: string | null;
+            province: string | null;
+            registeredCapital: number | null;
+        };
+    }[];
+    isInterested?: boolean;
+    portfolioUrl: string | null;
 }
 
 interface Skill {
@@ -70,7 +86,7 @@ interface UserDataForHeader {
 const ProfilePage: React.FC = () => {
     const [profile, setProfile] = useState<CandidateProfile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const { user, isAuthenticated } = useAuth();
+    const { user } = useAuth();
     const [isPersonalInfoFormOpen, setIsPersonalInfoFormOpen] = useState(false);
     const [isWorkHistoryFormOpen, setIsWorkHistoryFormOpen] = useState(false);
     const [editingWorkHistory, setEditingWorkHistory] = useState<any | null>(
@@ -82,59 +98,78 @@ const ProfilePage: React.FC = () => {
     const [isResumeFormOpen, setIsResumeFormOpen] = useState(false);
     const [isApplicationFormOpen, setIsApplicationFormOpen] = useState(false);
     const [isSkillsFormOpen, setIsSkillsFormOpen] = useState(false);
-    
+    const [isAnalysisSidebarOpen, setIsAnalysisSidebarOpen] = useState(false);
+    const [isPortfolioFormOpen, setIsPortfolioFormOpen] = useState(false);
 
-    const fetchProfile = async () => {
-        if (isAuthenticated && user?.role === 'CANDIDATE') {
-            setIsLoading(true);
-            try {
-                const response = await api.get<CandidateProfile>(
-                    '/profiles/candidate/me'
-                );
-                setProfile(response.data);
-            } catch (error) {
-                console.error('Failed to fetch profile:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        } else {
+    const fetchProfile = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const response = await api.get<CandidateProfile>(
+                '/profiles/candidate/me'
+            );
+            setProfile(response.data);
+        } catch (error) {
+            console.error('Failed to fetch profile:', error);
+            setProfile(null);
+        } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        fetchProfile(); //ให้ useEffect เรียกใช้ฟังก์ชันที่เราย้ายออกมา
-    }, [isAuthenticated, user]);
+        fetchProfile();
+    }, [fetchProfile]);
 
     const calculateCompletion = (p: CandidateProfile | null): number => {
         if (!p) return 0;
-
-        //กำหนดรายการที่ต้องการตรวจสอบ 7 รายการ
         const completionChecks = [
-            !!p.profileImageUrl, //มีรูปโปรไฟล์หรือไม่
-            !!p.bio, //มีข้อมูลส่วนตัว (bio) หรือไม่
-            p.workHistory && p.workHistory.length > 0, //มีประวัติการทำงานหรือไม่
-            !!p.major || !!p.studyYear, //มีข้อมูลการศึกษา (สาขา หรือ ชั้นปี) หรือไม่
-            p.certificateFiles && p.certificateFiles.length > 0, //มีใบประกาศหรือไม่
-            !!p.videoUrl, //มีวิดีโอแนะนำตัวหรือไม่
-            p.skills && p.skills.length > 0, //มีทักษะหรือไม่
+            !!p.profileImageUrl,
+            !!p.bio,
+            p.workHistory && p.workHistory.length > 0,
+            !!p.major || !!p.studyYear,
+            p.certificateFiles && p.certificateFiles.length > 0,
+            !!p.videoUrl,
+            p.skills && p.skills.length > 0,
         ];
-
-        //นับจำนวนรายการที่กรอกแล้ว (true)
         const completedCount = completionChecks.filter(Boolean).length;
-
-        //คำนวณเป็นเปอร์เซ็นต์ (ปัดเศษเป็นจำนวนเต็ม)
         const percentage = Math.round(
             (completedCount / completionChecks.length) * 100
         );
-
         return percentage;
     };
 
-    const handleProfileUpdate = (newProfileData: CandidateProfile) => {
-        //แทนที่ state profile ทั้งหมดด้วยข้อมูลใหม่ที่ได้รับจาก API โดยตรง
-        console.log('Received new profile data to update:', newProfileData);
-        setProfile(newProfileData);
+    const handleAnalysisComplete = (
+        analyzedSkills: { name: string; level: number }[]
+    ) => {
+        // นำ skill ใหม่มารวมกับของเก่า (ป้องกันการซ้ำ)
+        setProfile(prev => {
+            if (!prev) return null;
+            const skillMap = new Map(
+                prev.skills.map(s => [
+                    s.skill.name.toLowerCase(),
+                    { name: s.skill.name, rating: s.rating },
+                ])
+            );
+
+            analyzedSkills.forEach(newSkill => {
+                skillMap.set(newSkill.name.toLowerCase(), {
+                    name: newSkill.name,
+                    rating: newSkill.level,
+                });
+            });
+
+            const updatedSkillsForState = Array.from(skillMap.values()).map(
+                s => ({
+                    skill: { name: s.name },
+                    rating: s.rating,
+                })
+            );
+
+            return { ...prev, skills: updatedSkillsForState };
+        });
+
+        //เปิด Sidebar ของฟอร์มแก้ไขทักษะเพื่อให้ผู้ใช้ยืนยันและบันทึก
+        setIsSkillsFormOpen(true);
     };
 
     const completionRate = useMemo(
@@ -142,21 +177,22 @@ const ProfilePage: React.FC = () => {
         [profile]
     );
 
+    console.log('ค่า completionRate ที่คำนวณได้:', completionRate);
+
+    const handleProfileUpdate = (newProfileData: CandidateProfile) => {
+        setProfile(newProfileData);
+    };
+
     const handleSkillsUpdate = (newSkills: Skill[]) => {
         console.log('Updating skills:', newSkills);
     };
 
     const handleDeleteWorkHistory = async (workHistoryId: string) => {
-        if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) {
-            return;
-        }
+        if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) return;
         try {
             await api.delete(`/work-history/${workHistoryId}`);
             alert('ลบข้อมูลเรียบร้อย');
-            const response = await api.get<CandidateProfile>(
-                '/profiles/candidate/me'
-            );
-            handleProfileUpdate(response.data);
+            fetchProfile(); // เรียกข้อมูลใหม่
         } catch (error) {
             console.error('Failed to delete work history:', error);
             alert('เกิดข้อผิดพลาดในการลบข้อมูล');
@@ -285,32 +321,6 @@ const ProfilePage: React.FC = () => {
         contactFiles: [], // Placeholder
     };
 
-    const profileCompletenessUI = (
-    <div>
-        <p className="mb-2 text-sm opacity-90">
-            ความสมบูรณ์ของโปรไฟล์
-        </p>
-        <div className="mb-4">
-            <div className="mb-2 h-2 w-48 rounded-full bg-gray-300">
-                <div
-                    className="h-2 rounded-full bg-teal-400 transition-all duration-300"
-                    style={{ width: `${completionRate}%` }}
-                ></div>
-            </div>
-            <p className="text-right text-sm font-bold">
-                {completionRate}%
-            </p>
-        </div>
-        {/* คุณสามารถเพิ่มปุ่ม "แก้ไขข้อมูล" ตรงนี้ได้ ถ้าต้องการ */}
-        <button
-            onClick={() => setIsPersonalInfoFormOpen(true)}
-            className="rounded bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-        >
-            แก้ไขข้อมูล
-        </button>
-    </div>
-);
-
     const getInternshipTypeText = (type: string) => {
         switch (type) {
             case 'FULL_TIME':
@@ -328,14 +338,87 @@ const ProfilePage: React.FC = () => {
         <div className="min-h-screen bg-gray-50">
             <ProfileHeader
                 user={userDataForHeader}
-                // completionRate={completionRate}
+                completionRate={completionRate}
                 // onEditClick={() => setIsPersonalInfoFormOpen(true)}
-                actionsSlot={profileCompletenessUI}
                 onSave={handleHeaderSave}
                 onProfileUpdate={fetchProfile}
             />
 
             <div className="mx-auto max-w-7xl px-6 py-6">
+                {profile.interests && profile.interests.length > 0 && (
+                    <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                        <h2 className="mb-4 text-lg font-semibold text-gray-800">
+                            บริษัทที่สนใจในโปรไฟล์ของคุณ
+                        </h2>
+                        <ul className="space-y-3">
+                            {profile.interests.map((interest, index) => (
+                                <li key={interest.company.id}>
+                                    <Link
+                                        to={`/company/${interest.company.id}`}
+                                        className="flex w-full items-center gap-4 rounded-md bg-gray-50 p-4 transition-all hover:bg-white hover:shadow-md"
+                                    >
+                                        {/* ส่วนโลโก้ */}
+                                        {interest.company.logoUrl ? (
+                                            <img
+                                                src={`http://localhost:5001${interest.company.logoUrl}`}
+                                                alt={
+                                                    interest.company.companyName
+                                                }
+                                                className="h-16 w-16 flex-shrink-0 rounded-lg bg-white object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-teal-100 text-xl font-bold text-teal-600">
+                                                {interest.company.companyName.substring(
+                                                    0,
+                                                    2
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* ส่วนข้อมูล */}
+                                        <div className="flex-grow">
+                                            <p className="font-bold text-gray-800">
+                                                ชื่อบริษัท:&nbsp;&nbsp;
+                                                {interest.company.companyName}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                ประเภทธุรกิจ:&nbsp;&nbsp;
+                                                {interest.company
+                                                    .businessTypeName ||
+                                                    'ไม่ระบุประเภทธุรกิจ'}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                จังหวัด:&nbsp;&nbsp;
+                                                {interest.company.province ||
+                                                    'ไม่ระบุจังหวัด'}
+                                            </p>
+                                            {interest.company
+                                                .registeredCapital && (
+                                                <p className="text-sm text-gray-500">
+                                                    ทุนจดทะเบียน:&nbsp;&nbsp;
+                                                    {interest.company.registeredCapital.toLocaleString(
+                                                        'th-TH'
+                                                    )}{' '}
+                                                    บาท
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* ส่วนวันที่ (ชิดขวา) */}
+                                        <div className="self-start text-right text-xs text-gray-400">
+                                            <p>สนใจเมื่อ</p>
+                                            <p>
+                                                {new Date(
+                                                    interest.createdAt
+                                                ).toLocaleDateString('th-TH')}
+                                            </p>
+                                        </div>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                     <div className="space-y-6">
                         <ProfileCard
@@ -344,6 +427,28 @@ const ProfilePage: React.FC = () => {
                             placeholder="คลิก 'เพิ่มข้อมูล' เพื่อเพิ่มข้อมูลส่วนตัวของคุณ"
                             onEditClick={() => setIsPersonalInfoFormOpen(true)}
                         />
+                        <ProfileCard
+                            title="ผลงาน"
+                            onEditClick={() => setIsPortfolioFormOpen(true)}
+                        >
+                            {profile.portfolioUrl ? (
+                                <a
+                                    href={profile.portfolioUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-sm text-blue-600 hover:underline"
+                                >
+                                    <i className="fa-solid fa-link text-lg"></i>
+                                    <span className="truncate">
+                                        {profile.portfolioUrl}
+                                    </span>
+                                </a>
+                            ) : (
+                                <p className="text-sm text-gray-500">
+                                    ยังไม่มีการเพิ่มลิงก์ผลงาน
+                                </p>
+                            )}
+                        </ProfileCard>
                         <ProfileCard
                             title="ประสบการณ์การทำงานของคุณ"
                             // ไม่มี content={profile.experience} แล้ว
@@ -360,7 +465,7 @@ const ProfilePage: React.FC = () => {
                                         {profile.workHistory.map((job: any) => (
                                             <div
                                                 key={job.id}
-                                                className="border-b border-gray-100 pb-3 text-sm last:border-b-0 last:pb-0"
+                                                className="group relative border-b border-gray-100 p-3 text-sm last:border-b-0"
                                             >
                                                 <p className="text-gray-800">
                                                     <span className="font-semibold">
@@ -423,8 +528,8 @@ const ProfilePage: React.FC = () => {
                                                         handleDeleteWorkHistory(
                                                             job.id
                                                         )
-                                                    } //ทำงานกับ job.id ของรายการนี้เท่านั้น
-                                                    className="rounded-full p-2 text-red-500 transition-colors hover:text-red-700"
+                                                    }
+                                                    className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
                                                     aria-label="ลบรายการนี้"
                                                 >
                                                     <i className="fa-solid fa-trash"></i>
@@ -467,47 +572,81 @@ const ProfilePage: React.FC = () => {
                             ) : null}
                         </ProfileCard>
                         <ProfileCard
-                        title="รางวัลหรือใบประกาศนียบัตร"
-                        placeholder="คลิก 'เพิ่มข้อมูล' เพื่อแนบไฟล์รางวัลหรือใบประกาศ"
-                        onEditClick={() => setIsCertificateFormOpen(true)}
-                    >
-                        {profile.certificateFiles && profile.certificateFiles.length > 0 && (
-                            <div className="grid grid-cols-2 gap-4">
-                                {profile.certificateFiles.map((file: any) => (
-                                    <div key={file.id} className="group relative overflow-hidden rounded-lg border">
-                                        {/* ทำให้รูปภาพเป็นลิงก์ที่เปิดได้ */}
-                                        <a href={`http://localhost:5001${file.url}`} target="_blank" rel="noopener noreferrer">
-                                            {file.type.startsWith('image/') ? (
-                                                <img src={`http://localhost:5001${file.url}`} alt={file.name} className="h-40 w-full object-cover"/>
-                                            ) : (
-                                                <div className="flex h-40 w-full flex-col items-center justify-center bg-gray-100 p-4 text-center">
-                                                    <i className="fa-solid fa-file-alt text-4xl text-gray-400"></i>
-                                                    <span className="mt-2 text-xs break-all text-gray-600">{file.name}</span>
+                            title="รางวัลหรือใบประกาศนียบัตร"
+                            placeholder="คลิก 'เพิ่มข้อมูล' เพื่อแนบไฟล์รางวัลหรือใบประกาศ"
+                            onEditClick={() => setIsCertificateFormOpen(true)}
+                        >
+                            {profile.certificateFiles &&
+                                profile.certificateFiles.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {profile.certificateFiles.map(
+                                            (file: any) => (
+                                                <div
+                                                    key={file.id}
+                                                    className="group relative overflow-hidden rounded-lg border"
+                                                >
+                                                    {/* ทำให้รูปภาพเป็นลิงก์ที่เปิดได้ */}
+                                                    <a
+                                                        href={`http://localhost:5001${file.url}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        {file.type.startsWith(
+                                                            'image/'
+                                                        ) ? (
+                                                            <img
+                                                                src={`http://localhost:5001${file.url}`}
+                                                                alt={file.name}
+                                                                className="h-40 w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="flex h-40 w-full flex-col items-center justify-center bg-gray-100 p-4 text-center">
+                                                                <i className="fa-solid fa-file-alt text-4xl text-gray-400"></i>
+                                                                <span className="mt-2 text-xs break-all text-gray-600">
+                                                                    {file.name}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </a>
+
+                                                    {file.description && (
+                                                        <div className="p-3">
+                                                            <p className="text-sm text-gray-700">
+                                                                {
+                                                                    file.description
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* ปุ่มลบ จะปรากฏเมื่อเอาเมาส์ไปชี้ และเรียกฟังก์ชันที่ถูกต้อง */}
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDeleteCertificate(
+                                                                file.id
+                                                            )
+                                                        }
+                                                        className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
+                                                        aria-label="ลบไฟล์นี้"
+                                                    >
+                                                        <i className="fa-solid fa-trash"></i>
+                                                    </button>
                                                 </div>
-                                            )}
-                                        </a>
-
-                                        {file.description && <div className="p-3"><p className="text-sm text-gray-700">{file.description}</p></div>}
-
-                                        {/* ปุ่มลบ จะปรากฏเมื่อเอาเมาส์ไปชี้ และเรียกฟังก์ชันที่ถูกต้อง */}
-                                        <button
-                                            onClick={() => handleDeleteCertificate(file.id)}
-                                            className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-red-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
-                                            aria-label="ลบไฟล์นี้"
-                                        >
-                                            <i className="fa-solid fa-trash"></i>
-                                        </button>
+                                            )
+                                        )}
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </ProfileCard>
+                                )}
+                        </ProfileCard>
                     </div>
 
                     <div className="space-y-6">
+                        <ResumeAnalysisCard
+                            onAnalysisComplete={handleAnalysisComplete}
+                        />
                         <VideoUploadCard
                             videoUrl={profile.videoUrl}
                             onEditClick={() => setIsVideoFormOpen(true)}
+                            role="CANDIDATE"
                         />
                         <ProfileCard
                             title="เรซูเม่"
@@ -522,7 +661,7 @@ const ProfilePage: React.FC = () => {
                                             (file: any) => (
                                                 <div
                                                     key={file.id}
-                                                    className="group flex items-center justify-between rounded border bg-gray-50 p-3"
+                                                    className="group relative flex items-center justify-between rounded border bg-gray-50 p-3"
                                                 >
                                                     <a
                                                         href={`http://localhost:5001${file.url}`}
@@ -539,7 +678,8 @@ const ProfilePage: React.FC = () => {
                                                                 file.id
                                                             )
                                                         }
-                                                        className="mr-8 text-red-500 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-700" // << เพิ่ม mr-2 เข้าไป
+                                                        className="absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-red-500 opacity-0 shadow transition-opacity group-hover:opacity-100"
+                                                        aria-label="ลบไฟล์เรซูเม่"
                                                     >
                                                         <i className="fa-solid fa-trash"></i>
                                                     </button>
@@ -552,33 +692,71 @@ const ProfilePage: React.FC = () => {
                         <ProfileCard
                             title="ทักษะ"
                             placeholder="เพิ่มทักษะที่จำเป็นสำหรับตำแหน่งงานที่คุณสนใจ (กรอกรายละเอียดฝึกงานก่อนเพื่อเพิ่มตำแหน่งงาน)"
-                            onEditClick={() => setIsSkillsFormOpen(true)}
+                            // onEditClick={() => setIsSkillsFormOpen(true)}
+                            actionsSlot={
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() =>
+                                            setIsAnalysisSidebarOpen(true)
+                                        } // สมมติว่า state นี้ชื่อ isAnalysisSidebarOpen
+                                        className="text-xs font-semibold text-teal-600 hover:underline"
+                                    >
+                                        วิเคราะห์จาก PDF
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            setIsSkillsFormOpen(true)
+                                        }
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-transform duration-200 ease-in-out hover:scale-110 hover:bg-blue-600"
+                                        aria-label="แก้ไข ทักษะ"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                            }
                         >
                             {profile.skills && profile.skills.length > 0 ? (
                                 <div className="space-y-3">
-    {[...profile.skills] // สร้างสำเนาของ array
-        .sort((a, b) => b.rating - a.rating) // เรียงลำดับจากมากไปน้อย (descending)
-        .map((s: any) => ( // แสดงผลข้อมูลที่เรียงลำดับแล้ว
-            <div key={s.skill.name}>
-                <div className="mb-1 flex items-center justify-between text-sm">
-                    <span className="font-semibold text-gray-700">
-                        {s.skill.name}
-                    </span>
-                    <span className="font-bold text-teal-600">
-                        {s.rating}/10
-                    </span>
-                </div>
-                <div className="h-2.5 w-full rounded-full bg-gray-200">
-                    <div
-                        className="h-2.5 rounded-full bg-teal-500"
-                        style={{
-                            width: `${s.rating * 10}%`,
-                        }}
-                    ></div>
-                </div>
-            </div>
-        ))}
-</div>
+                                    {[...profile.skills] // สร้างสำเนาของ array
+                                        .sort((a, b) => b.rating - a.rating) // เรียงลำดับจากมากไปน้อย (descending)
+                                        .map(
+                                            (
+                                                s: any // แสดงผลข้อมูลที่เรียงลำดับแล้ว
+                                            ) => (
+                                                <div key={s.skill.name}>
+                                                    <div className="mb-1 flex items-center justify-between text-sm">
+                                                        <span className="font-semibold text-gray-700">
+                                                            {s.skill.name}
+                                                        </span>
+                                                        <span className="font-bold text-teal-600">
+                                                            {s.rating}/10
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2.5 w-full rounded-full bg-gray-200">
+                                                        <div
+                                                            className="h-2.5 rounded-full bg-teal-500"
+                                                            style={{
+                                                                width: `${s.rating * 10}%`,
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        )}
+                                </div>
                             ) : null}
                         </ProfileCard>
                         <ProfileCard
@@ -735,6 +913,16 @@ const ProfilePage: React.FC = () => {
                     desiredPosition={profile.desiredPosition}
                     onUpdate={handleProfileUpdate}
                     onClose={() => setIsSkillsFormOpen(false)}
+                />
+            </Sidebar>
+            <Sidebar
+                openSidebar={isPortfolioFormOpen}
+                setOpenSidebar={setIsPortfolioFormOpen}
+            >
+                <PortfolioSide
+                    currentPortfolioUrl={profile.portfolioUrl}
+                    onUpdate={fetchProfile}
+                    onClose={() => setIsPortfolioFormOpen(false)}
                 />
             </Sidebar>
         </div>

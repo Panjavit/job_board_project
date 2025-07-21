@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 const router = express.Router();
 
 // @route   GET /api/students
-router.get('/', protect, authorize("COMPANY", "CANDIDATE"), async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const {
       position,
@@ -15,16 +15,16 @@ router.get('/', protect, authorize("COMPANY", "CANDIDATE"), async (req, res) => 
       studentCode,
       page = 1,
       limit = 10,
+      sort = "desc",
     } = req.query;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    // สร้างเงื่อนไข
     const where = {
-      //ค้นหาเฉพาะ CandidateProfile ที่มี InternshipApplication อย่างน้อย 1 รายการ
+      // ค้นหาเฉพาะ CandidateProfile ที่มี InternshipApplication อย่างน้อย 1 รายการ
       internshipApplications: {
-        some: {}, //ใส่ object ว่างๆ ใน some หมายถึง "ขอแค่มีอย่างน้อยหนึ่งรายการ"
+        some: {}, // ใส่ object ว่างๆ ใน some หมายถึง "ขอแค่มีอย่างน้อยหนึ่งรายการ"
       },
     };
 
@@ -62,6 +62,14 @@ router.get('/', protect, authorize("COMPANY", "CANDIDATE"), async (req, res) => 
       };
     }
 
+    // สร้างเงื่อนไขการเรียงลำดับ
+    let orderBy = {};
+    if (sort === "asc") {
+      orderBy = { createdAt: "asc" };
+    } else {
+      orderBy = { updatedAt: "desc" };
+    }
+
     const students = await prisma.candidateProfile.findMany({
       where,
       skip,
@@ -93,9 +101,8 @@ router.get('/', protect, authorize("COMPANY", "CANDIDATE"), async (req, res) => 
           },
         },
       },
-      orderBy: {
-        updatedAt: "desc",
-      },
+      // ✅ แก้ไขให้ใช้ตัวแปร orderBy ที่เราสร้างขึ้น
+      orderBy: orderBy,
     });
 
     const totalStudents = await prisma.candidateProfile.count({ where });
@@ -144,12 +151,11 @@ router.get("/:id", protect, authorize("COMPANY"), async (req, res) => {
 
     const interaction = await prisma.interaction.findFirst({
       where: {
-        companyProfileId: req.user.profileId, // ID ของบริษัทที่กำลังดู
-        studentProfileId: id, // ID ของนักศึกษาที่ถูกดู
+        companyProfileId: req.user.profileId,
+        studentProfileId: id,
       },
     });
 
-    // 2. สร้างตัวแปร isInterestedByCompany เป็น true ถ้ามี interaction, เป็น false ถ้าไม่มี
     const isInterestedByCompany = !!interaction;
 
     res.json({ ...studentProfile, isInterestedByCompany });
