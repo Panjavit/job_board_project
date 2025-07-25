@@ -12,6 +12,5 @@ export { default as Card } from './Card';
 export { default as EducationSide } from './EducationSide';
 export { default as FilterSection } from './FilterSection';
 export { default as Footer } from './Footer';
-//export { default as LoginAlertModal } from './LoginAlertModal';
 export { default as Navbar } from './Navbar';
 export { default as WorkHistorySide } from './WorkHistorySide';

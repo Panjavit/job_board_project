@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { Plus, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface ContactInfoSideProps {
     currentProfile: {
@@ -54,11 +55,11 @@ const ContactInfoSide: React.FC<ContactInfoSideProps> = ({ currentProfile, onUpd
         e.preventDefault();
         try {
             await api.put('/profiles/company/me', { additionalContactInfo });
-            alert('บันทึกข้อมูลติดต่อเพิ่มเติมสำเร็จ!');
+            toast.success('บันทึกข้อมูลติดต่อเพิ่มเติมสำเร็จ!');
             onUpdate(); 
             onClose(); 
         } catch (error) {
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
             console.error(error);
         }
     };

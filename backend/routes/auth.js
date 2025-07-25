@@ -5,6 +5,8 @@ import jwt from 'jsonwebtoken';
 import { protect, authorize } from '../middleware/auth.js'; //
 import { OAuth2Client } from 'google-auth-library';
 import axios from 'axios';
+import * as crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -321,6 +323,120 @@ router.post('/change-password', protect, async (req, res) => {
         await prisma.user.update({
             where: { id: req.user.id },
             data: { password: hashedNewPassword },
+        });
+
+        res.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Server Error');
+    }
+});
+
+
+//@route   POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        //ไม่แจ้ง error ออกไป หากไม่พบผู้ใช้ในระบบ เพื่อป้องกันการเดาสุ่มอีเมล
+        if (!user) {
+            return res.json({ message: 'หากอีเมลนี้มีอยู่ในระบบ คุณจะได้รับลิงก์สำหรับรีเซ็ตรหัสผ่าน' });
+        }
+
+        //สร้าง Token สำหรับรีเซ็ต
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const passwordResetToken = crypto
+            .createHash('sha256')
+            .update(resetToken)
+            .digest('hex');
+
+        //กำหนดเวลาหมดอายุ
+        const passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        //บันทึก Token ที่เข้ารหัสแล้วและเวลาหมดอายุลง DB
+        await prisma.user.update({
+            where: { email },
+            data: {
+                passwordResetToken,
+                passwordResetExpires,
+            },
+        });
+
+        //สร้าง URL สำหรับให้ผู้ใช้คลิก
+        const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+        const message = `
+            <h1>คุณได้ส่งคำขอรีเซ็ตรหัสผ่าน</h1>
+            <p>กรุณาคลิกที่ลิงก์ด้านล่างเพื่อตั้งรหัสผ่านใหม่ ลิงก์นี้จะหมดอายุใน 10 นาที</p>
+            <a href="${resetUrl}" clicktracking=off>${resetUrl}</a>
+        `;
+
+        //ส่งอีเมล (ใช้ transporter ที่มีอยู่แล้ว)
+         const transporter = nodemailer.createTransport({
+            host: "smtp.gmail.com",
+            port: 465,
+            secure: true,
+            auth: {
+                type: "OAuth2",
+                user: process.env.OAUTH_SENDER_EMAIL,
+                clientId: process.env.GMAIL_CLIENT_ID,
+                clientSecret: process.env.GMAIL_CLIENT_SECRET,
+                refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+            },
+        });
+
+        await transporter.sendMail({
+            from: `"IdeaTrade Jobs" <${process.env.OAUTH_SENDER_EMAIL}>`,
+            to: user.email,
+            subject: 'คำขอรีเซ็ตรหัสผ่าน',
+            html: message,
+        });
+
+        res.json({ message: 'ลิงก์สำหรับรีเซ็ตรหัสผ่านได้ถูกส่งไปยังอีเมลของคุณแล้ว' });
+
+    } catch (error) {
+        console.error(error); 
+        res.status(200).json({ message: 'หากอีเมลนี้มีอยู่ในระบบ คุณจะได้รับลิงก์สำหรับรีเซ็ตรหัสผ่าน' });
+    }
+});
+
+
+//@route   POST /api/auth/reset-password/:token
+router.post('/reset-password/:token', async (req, res) => {
+    try {
+        //เข้ารหัส token ที่ได้รับจาก URL เพื่อนำไปเปรียบเทียบกับใน DB
+        const passwordResetToken = crypto
+            .createHash('sha256')
+            .update(req.params.token)
+            .digest('hex');
+
+        //ค้นหาผู้ใช้ด้วย token และต้องยังไม่หมดอายุ
+        const user = await prisma.user.findFirst({
+            where: {
+                passwordResetToken,
+                passwordResetExpires: {
+                    gt: new Date(), //gt = Greater Than(มากกว่าเวลาปัจจุบัน)
+                },
+            },
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Token ไม่ถูกต้องหรือหมดอายุแล้ว' });
+        }
+
+        //เข้ารหัสรหัสผ่านใหม่ และอัปเดตลง DB
+        const { password } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                //ล้างค่า token ทิ้ง เพื่อไม่ให้ใช้ซ้ำได้
+                passwordResetToken: null,
+                passwordResetExpires: null,
+            },
         });
 
         res.json({ message: 'เปลี่ยนรหัสผ่านสำเร็จ' });

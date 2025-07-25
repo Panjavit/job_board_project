@@ -6,23 +6,28 @@ import api from './services/api';
 import { useAuth } from './context/AuthContext';
 import { Filter } from 'lucide-react';
 import LoginAlertModal from './components/LoginAlertModal';
+import toast from 'react-hot-toast';
 
-// Interface นี้ควรจะตรงกับข้อมูลที่ Backend ส่งมาให้จริงๆ
+// 1. อัปเดต Interface ให้ตรงกับโครงสร้างข้อมูลใหม่
 interface StudentProfile {
     id: string;
     studentCode: string | null;
     fullName: string;
     desiredPosition: string | null;
-    internshipApplications: {
-        internshipType: string;
-        startDate: string;
-        endDate: string;
-    }[];
     studyYear: number | null;
     major: string | null;
     skills: { skill: { name: string } }[];
     updatedAt: string;
     profileImageUrl: string | null;
+    internshipType: string | null;
+    startDate: string | null;
+    endDate: string | null;
+}
+
+interface PaginationInfo {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
 }
 
 function App() {
@@ -35,62 +40,62 @@ function App() {
         internshipType: '',
     });
     const [sortBy, setSortBy] = useState('desc');
-    
-    // State นี้จะใช้เป็น "ตัวกระตุ้น" ให้ useEffect ทำงานเมื่อมีการค้นหา
     const [searchTrigger, setSearchTrigger] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [paginationInfo, setPaginationInfo] = useState<PaginationInfo | null>(null);
 
     const { isAuthenticated, user } = useAuth();
     const navigate = useNavigate();
 
-    // useEffect นี้จะรับผิดชอบการดึงข้อมูลทั้งหมด
-    // และจะทำงานเมื่อ:
-    // 1. หน้าเว็บโหลดครั้งแรก
-    // 2. ค่า sortBy เปลี่ยน (ผู้ใช้เลือก Dropdown)
-    // 3. ค่า searchTrigger เปลี่ยน (ผู้ใช้กดปุ่มค้นหา)
     useEffect(() => {
         const fetchStudents = async () => {
             setIsLoading(true);
             const params = new URLSearchParams();
             
-            // นำค่าจาก filters และ sortBy มาสร้างเป็น query string
             if (filters.position) params.append('position', filters.position);
             if (filters.studyYear) params.append('studyYear', filters.studyYear);
             if (filters.internshipType) params.append('internshipType', filters.internshipType);
             params.append('sort', sortBy);
+            params.append('page', currentPage.toString());
+            // params.append('limit', '12'); //แสดง 12 คนต่อหน้า
 
             try {
                 const response = await api.get(`/students?${params.toString()}`);
                 setStudents(response.data.data || []);
+                setPaginationInfo(response.data.pagination || null);
             } catch (error) {
                 console.error("Failed to fetch students:", error);
                 setStudents([]);
+                setPaginationInfo(null);
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchStudents();
-    }, [sortBy, searchTrigger]); // 🔴 จุดสำคัญ: ให้ useEffect ทำงานเมื่อ 2 ค่านี้เปลี่ยน
+    }, [sortBy, searchTrigger, currentPage]);
 
-    // ฟังก์ชันสำหรับส่งให้ปุ่ม "ค้นหา" ใน FilterSection
     const handleSearch = () => {
-        setSearchTrigger(prev => prev + 1); // เปลี่ยนค่าเพื่อกระตุ้น useEffect
+        setCurrentPage(1);
+        setSearchTrigger(prev => prev + 1);
     };
 
-    // ฟังก์ชันสำหรับจัดการการคลิกการ์ด
     const handleCardClick = (studentId: string) => {
-    if (isAuthenticated) {
-        if (user?.role === 'COMPANY') {
-            // ถ้าเป็น COMPANY ให้ไปที่หน้าโปรไฟล์นักศึกษา
-            navigate(`/students/${studentId}`);
+        if (isAuthenticated) {
+            if (user?.role === 'COMPANY') {
+                navigate(`/students/${studentId}`);
+            } else {
+                toast.error('ฟีเจอร์นี้สำหรับผู้ใช้งานประเภทบริษัทเท่านั้น');
+            }
         } else {
-            // ถ้าเป็น role อื่น (เช่น CANDIDATE) ให้แจ้งเตือน
-            alert('ฟีเจอร์นี้สำหรับผู้ใช้งานประเภทบริษัทเท่านั้น');
+            setIsModalOpen(true);
         }
-    } else {
-        setIsModalOpen(true);
-    }
-};
+    };
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo(0, 0);
+    };
 
     return (
         <div className="w-full">
@@ -110,7 +115,6 @@ function App() {
                             <select 
                                 className="bg-black text-white focus:outline-none"
                                 value={sortBy}
-                                // เมื่อเปลี่ยนค่า ให้ setSortBy โดยตรง
                                 onChange={(e) => setSortBy(e.target.value)}
                             >
                                 <option value="desc">เรียงลำดับตาม : ล่าสุด</option>
@@ -123,21 +127,57 @@ function App() {
                 {isLoading ? (
                     <p className="mt-8 text-center">กำลังค้นหา...</p>
                 ) : (
-                    <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">
-                        {students.length > 0 ? (
-                            students.map(student => (
-                                <Card
-                                    key={student.id}
-                                    student={student}
-                                    onCardClick={() => handleCardClick(student.id)}
-                                />
-                            ))
-                        ) : (
-                            <p className="col-span-full mt-8 text-center text-gray-500">
-                                ไม่พบนักศึกษาตามเงื่อนไขที่ค้นหา
-                            </p>
+                    <>
+                        <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-3">
+                            {students.length > 0 ? (
+                                students.map(student => (
+                                    <Card
+                                        key={student.id}
+                                        student={student} // 2. ส่ง student ไปตรงๆ ได้เลย
+                                        onCardClick={() => handleCardClick(student.id)}
+                                    />
+                                ))
+                            ) : (
+                                <p className="col-span-full mt-8 text-center text-gray-500">
+                                    ไม่พบนักศึกษาตามเงื่อนไขที่ค้นหา
+                                </p>
+                            )}
+                        </div>
+                        
+                        {paginationInfo && paginationInfo.totalPages > 1 && (
+                            <div className="mt-12 flex justify-center items-center gap-2">
+                                <button
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 rounded-md bg-white border border-gray-300 disabled:opacity-50"
+                                >
+                                    ก่อนหน้า
+                                </button>
+                                
+                                {Array.from({ length: paginationInfo.totalPages }, (_, i) => i + 1).map(page => (
+                                    <button
+                                        key={page}
+                                        onClick={() => handlePageChange(page)}
+                                        className={`px-4 py-2 rounded-md border ${
+                                            currentPage === page
+                                                ? 'bg-teal-500 text-white border-teal-500'
+                                                : 'bg-white border-gray-300'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+
+                                <button
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === paginationInfo.totalPages}
+                                    className="px-4 py-2 rounded-md bg-white border border-gray-300 disabled:opacity-50"
+                                >
+                                    ถัดไป
+                                </button>
+                            </div>
                         )}
-                    </div>
+                    </>
                 )}
             </section>
             <LoginAlertModal

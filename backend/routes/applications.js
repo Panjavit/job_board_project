@@ -16,85 +16,84 @@ router.post("/", protect, authorize("CANDIDATE"), async (req, res) => {
       internshipType,
     } = req.body;
 
-    //ใช้ Transaction เพื่อรัน 2 คำสั่งพร้อมกัน
-    const result = await prisma.$transaction(async (tx) => {
-      await tx.candidateProfile.update({
-        where: { id: req.user.profileId },
-        data: { desiredPosition: positionOfInterest },
-      });
+    const dataToUpdate = {
+      desiredPosition: positionOfInterest,
+      positionOfInterest,
+      universityName,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      reason,
+      internshipType,
+    };
 
-      //สร้างหรืออัปเดตใบสมัครฝึกงาน (InternshipApplication) (Logic เดิม)
-      const ourCompany = await tx.companyProfile.findFirst({});
-      if (!ourCompany) {
-        throw new Error("ไม่พบข้อมูลบริษัทในระบบ");
-      }
-
-      const existingApplication = await tx.internshipApplication.findFirst({
-        where: {
-          candidateProfileId: req.user.profileId,
-          companyProfileId: ourCompany.id,
-        },
-      });
-
-      const applicationData = {
-        positionOfInterest,
-        universityName,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        reason,
-        internshipType,
-      };
-
-      let savedApplication;
-      if (existingApplication) {
-        savedApplication = await tx.internshipApplication.update({
-          where: { id: existingApplication.id },
-          data: applicationData,
-        });
-      } else {
-
-        const prefix = positionOfInterest
-          .replace(/[^a-zA-Z]/g, "") //เอาเฉพาะตัวอักษรภาษาอังกฤษ
-          .substring(0, 6)
-          .toUpperCase();
-
-        //นับว่ามีคนใช้ Prefix นี้ไปแล้วกี่คน
-        const count = await tx.candidateProfile.count({
-          where: {
-            studentCode: {
-              startsWith: prefix,
-            },
-          },
-        });
-
-        //สร้างรหัสใหม่โดยนำ Prefix มาต่อกับลำดับ + 1 (พร้อมเติม 0 ข้างหน้า)
-        //เช่น "BACKEN" + "01" -> "BACKEN01"
-        const studentCode = `${prefix}${String(count + 1).padStart(2, "0")}`;
-
-        //บันทึกรหัสที่สร้างขึ้นใหม่นี้ลงในโปรไฟล์ของนักศึกษา
-        await tx.candidateProfile.update({
-          where: { id: req.user.profileId },
-          data: { studentCode: studentCode },
-        });
-        
-        savedApplication = await tx.internshipApplication.create({
-          data: {
-            ...applicationData,
-            candidateProfileId: req.user.profileId,
-            companyProfileId: ourCompany.id,
-          },
-        });
-      }
-
-      return savedApplication;
+    const candidateProfile = await prisma.candidateProfile.findUnique({
+      where: { id: req.user.profileId },
     });
 
-    res.status(200).json(result);
-  } catch (error) {
-    if (error.code === "P2002") {
-      return res.status(400).json({ message: "คุณได้เคยสมัครฝึกงานไปแล้ว" });
+    if (!candidateProfile) {
+      return res.status(404).json({ message: 'ไม่พบโปรไฟล์' });
     }
-    console.error("Error saving application:", error);
+    
+    if (!candidateProfile.studentCode) {
+      let isCodeSaved = false;
+      let attempt = 0;
+      const maxAttempts = 5;
+
+      while (!isCodeSaved && attempt < maxAttempts) {
+        try {
+          const prefix = (positionOfInterest || 'CANDIDATE')
+            .replace(/[^a-zA-Z]/g, "")
+            .substring(0, 6)
+            .toUpperCase();
+          
+          const count = await prisma.candidateProfile.count({
+            where: { studentCode: { startsWith: prefix } },
+          });
+      
+          const studentCode = `${prefix}${String(count + 1 + attempt).padStart(2, "0")}`;
+
+          await prisma.candidateProfile.update({
+            where: { id: req.user.profileId },
+            data: { ...dataToUpdate, studentCode: studentCode },
+          });
+
+          isCodeSaved = true;
+
+        } catch (error) {
+          if (error.code === 'P2002' && error.meta?.target?.includes('studentCode')) {
+            attempt++; 
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      if (!isCodeSaved) {
+        throw new Error('ไม่สามารถสร้างรหัสนักศึกษาที่ไม่ซ้ำกันได้');
+      }
+
+    } else {
+      await prisma.candidateProfile.update({
+        where: { id: req.user.profileId },
+        data: dataToUpdate,
+      });
+    }
+
+    const finalProfile = await prisma.candidateProfile.findUnique({
+        where: { id: req.user.profileId },
+        include: {
+            skills: { include: { skill: true } },
+            workHistory: { orderBy: { startDate: "desc" } },
+            certificateFiles: true,
+            contactFiles: true,
+            interests: { include: { company: true } },
+        }
+    });
+
+    res.status(200).json(finalProfile);
+
+  } catch (error) {
+    console.error("Error saving application details:", error);
     res.status(500).send("Server Error");
   }
 });

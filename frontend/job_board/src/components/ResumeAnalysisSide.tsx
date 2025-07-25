@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 import { Upload, BrainCircuit } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Skill {
     name: string;
@@ -38,7 +39,7 @@ const ResumeAnalysisSide: React.FC<ResumeAnalysisSideProps> = ({ onAnalysisCompl
             
         } catch (error) {
             console.error("PDF analysis failed:", error);
-            alert("เกิดข้อผิดพลาดในการวิเคราะห์ไฟล์ PDF");
+            toast.error("เกิดข้อผิดพลาดในการวิเคราะห์ไฟล์ PDF");
         } finally {
             setIsAnalyzing(false);
             e.target.value = ''; // Reset file input

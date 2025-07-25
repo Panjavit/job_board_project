@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface CompanyVideoSideProps {
     currentVideoUrl: string | null;
@@ -19,12 +20,12 @@ const CompanyVideoSide: React.FC<CompanyVideoSideProps> = ({ currentVideoUrl, on
         try {
             // ใช้ API เดิมในการอัปเดตเฉพาะ videoUrl
             await api.put('/profiles/company/me', { videoUrl });
-            alert('อัปเดตลิงก์วิดีโอสำเร็จ!');
+            toast.success('อัปเดตลิงก์วิดีโอสำเร็จ!');
             onUpdate(); // เรียก onUpdate เพื่อรีเฟรชข้อมูลหน้าหลัก
             onClose();
         } catch (error) {
             console.error("Failed to update video info:", error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 

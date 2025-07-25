@@ -9,6 +9,8 @@ import Linkify from '../components/Linkify';
 import CompanyRegistrationSide from '../components/CompanyRegistrationSide';
 import VideoUploadCard from '../components/VideoUploadCard';
 import CompanyVideoSide from '../components/CompanyVideoSide';
+import WorkDetailsSide from '../components/WorkDetailsSide';
+import toast from 'react-hot-toast';
 
 interface CompanyProfile {
     id: string;
@@ -30,6 +32,11 @@ interface CompanyProfile {
     businessTypeName: string | null;
     registeredCapital: number | null;
     videoUrl: string | null;
+    workArrangement: string | null;
+    workingDays: string | null;
+    workingHours: string | null;
+    workPolicy: string | null;
+    
 }
 interface InterestedStudentInteraction {
     id: string;
@@ -38,7 +45,7 @@ interface InterestedStudentInteraction {
         fullName: string;
         desiredPosition: string | null;
         major: string | null;
-        internshipApplications: { universityName: string }[];
+        universityName: string | null;
     };
 }
 
@@ -54,6 +61,8 @@ const CompanyPage: React.FC = () => {
         useState(false);
 
     const [isVideoSidebarOpen, setIsVideoSidebarOpen] = useState(false);
+    const [isWorkDetailsSidebarOpen, setIsWorkDetailsSidebarOpen] =
+        useState(false);
     const fetchData = useCallback(async () => {
         try {
             const profilePromise = api.get('/profiles/company/me');
@@ -96,6 +105,18 @@ const CompanyPage: React.FC = () => {
                 ไม่พบข้อมูลโปรไฟล์ กรุณาลองเข้าสู่ระบบใหม่อีกครั้ง
             </div>
         );
+
+    const getWorkArrangementText = (arrangement: string | null) => {
+        switch (arrangement) {
+            case 'HYBRID':
+                return 'ไฮบริด (Hybrid)';
+            case 'REMOTE':
+                return 'ทำงานทางไกล (Remote)';
+            case 'ONSITE':
+            default:
+                return 'เข้าออฟฟิศ (On-site)';
+        }
+    };
 
     return (
         <>
@@ -143,10 +164,10 @@ const CompanyPage: React.FC = () => {
                                                 '/profiles/company/me/logo',
                                                 formData
                                             );
-                                            alert('อัปเดตโลโก้สำเร็จ!');
+                                            toast.success('อัปเดตโลโก้สำเร็จ!');
                                             fetchData();
                                         } catch (err) {
-                                            alert(
+                                            toast.error(
                                                 'เกิดข้อผิดพลาดในการอัปโหลดโลโก้'
                                             );
                                             console.error(err);
@@ -187,127 +208,320 @@ const CompanyPage: React.FC = () => {
                 </div>
                 {/* Body Content */}
                 <div className="mx-auto mt-6 max-w-7xl">
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        {/* --- คอลัมน์ซ้าย --- */}
+                        <div className="space-y-6">
+                            {/* การ์ดวิดีโอแนะนำบริษัท */}
+                            <VideoUploadCard
+                                videoUrl={profile.videoUrl}
+                                onEditClick={() => setIsVideoSidebarOpen(true)}
+                                role="COMPANY"
+                            />
 
-                    {/* --- คอลัมน์ซ้าย --- */}
-                    <div className="space-y-6">
-                        {/* 1. การ์ดวิดีโอแนะนำบริษัท */}
-                        <VideoUploadCard
-                            videoUrl={profile.videoUrl}
-                            onEditClick={() => setIsVideoSidebarOpen(true)}
-                            role="COMPANY"
-                        />
-
-                        {/* 2. การ์ดข้อมูลติดต่อ */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold">ข้อมูลติดต่อ</h2>
-                                <button
-                                    onClick={() => setIsContactSidebarOpen(true)}
-                                    className="bg-teal-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-teal-600 transition-transform duration-200 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                                    aria-label="แก้ไขข้อมูลติดต่อ"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="space-y-3 text-gray-700">
-                                {profile.location && (
-                                    <div className="flex items-start gap-3">
-                                        <MapPin size={18} className="mt-1 flex-shrink-0 text-gray-400" />
-                                        <span>{profile.location}</span>
-                                    </div>
-                                )}
-                                {profile.emails.map(e => (
-                                    <div key={e.id} className="flex items-start gap-3">
-                                        <Mail size={18} className="mt-1 flex-shrink-0 text-gray-400" />
-                                        <a href={`mailto:${e.email}`} className="break-all hover:underline">{e.email}</a>
-                                    </div>
-                                ))}
-                                {profile.phones.map(p => (
-                                    <div key={p.id} className="flex items-start gap-3">
-                                        <Phone size={18} className="mt-1 flex-shrink-0 text-gray-400" />
-                                        <span>{p.phone}</span>
-                                    </div>
-                                ))}
-                                {profile.additionalContactInfo && (
-                                    <div className="mt-3 border-t border-gray-100 pt-3">
-                                        <h3 className="mb-2 font-semibold text-gray-800">ช่องทางติดต่อเพิ่มเติม</h3>
-                                        <div className="flex items-start gap-3">
-                                            <Linkify text={profile.additionalContactInfo} />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 3. การ์ดข้อมูลทางทะเบียน */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-gray-800">ข้อมูลทางทะเบียน</h2>
-                                <button
-                                    onClick={() => setIsRegistrationSidebarOpen(true)}
-                                    className="bg-teal-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-teal-600 transition-transform duration-200 ease-in-out hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
-                                    aria-label="แก้ไขข้อมูลทางทะเบียน"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z" />
-                                    </svg>
-                                </button>
-                            </div>
-                            <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-gray-700 md:grid-cols-2">
-                                <p><span className="font-semibold">ชื่อนิติบุคคล:</span> {profile.legalName || '-'}</p>
-                                <p><span className="font-semibold">ประเภทนิติบุคคล:</span> {profile.companyType || '-'}</p>
-                                <p><span className="font-semibold">เลขทะเบียน:</span> {profile.registrationNumber || '-'}</p>
-                                <p><span className="font-semibold">จังหวัด:</span> {profile.province || '-'}</p>
-                                <p className="col-span-2"><span className="font-semibold">ประเภทธุรกิจ:</span> {profile.businessTypeName || '-'}</p>
-                                <p className="col-span-2"><span className="font-semibold">ทุนจดทะเบียน:</span> {profile.registeredCapital?.toLocaleString('th-TH') || '-'} บาท</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* --- คอลัมน์ขวา --- */}
-                    <div className="space-y-6">
-                        {/* การ์ดรายชื่อบุคคลที่สนใจ */}
-                        <div className="rounded-lg border border-gray-200 bg-white p-6">
-                            <div className="mb-4 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <User className="h-5 w-5 text-gray-600" />
-                                    <h2 className="text-lg font-semibold text-gray-800">รายชื่อบุคคลที่สนใจ</h2>
+                            {/* การ์ดข้อมูลติดต่อ */}
+                            <div className="rounded-lg border border-gray-200 bg-white p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold">
+                                        ข้อมูลติดต่อ
+                                    </h2>
+                                    <button
+                                        onClick={() =>
+                                            setIsContactSidebarOpen(true)
+                                        }
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-500 text-white transition-transform duration-200 ease-in-out hover:scale-110 hover:bg-teal-600 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none"
+                                        aria-label="แก้ไขข้อมูลติดต่อ"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"
+                                            />
+                                        </svg>
+                                    </button>
                                 </div>
-                                <span className="text-sm text-gray-500">{interestedStudents.length} คน</span>
-                            </div>
-                            {isLoading ? (
-                                <p className="py-4 text-center text-gray-500">กำลังโหลดรายชื่อ...</p>
-                            ) : (
-                                <div className="space-y-3">
-                                    {interestedStudents.length > 0 ? (
-                                        interestedStudents.map(({ id, student }) => (
-                                            <div key={id} className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md">
-                                                <div className="space-y-1 text-base">
-                                                    <p className="text-gray-800"><span className="font-semibold">ชื่อ:</span> {student.fullName}</p>
-                                                    <p className="text-gray-800"><span className="font-semibold">ตำแหน่ง:</span><span className="text-teal-600"> {student.desiredPosition || 'ไม่ระบุ'}</span></p>
-                                                    <p className="text-gray-800"><span className="font-semibold">มหาวิทยาลัย:</span> {student.internshipApplications[0]?.universityName || 'ไม่ระบุ'}</p>
-                                                    <p className="text-gray-800"><span className="font-semibold">สาขาวิชา:</span> {student.major || 'ไม่ระบุ'}</p>
-                                                </div>
-                                                <div>
-                                                    <Link to={`/students/${student.id}`} className="rounded-lg border border-teal-500 bg-white px-5 py-2 text-sm font-medium text-teal-600 shadow-sm transition-colors hover:bg-teal-50">
-                                                        ดูโปรไฟล์
-                                                    </Link>
-                                                </div>
+                                <div className="space-y-3 text-gray-700">
+                                    {profile.location && (
+                                        <div className="flex items-start gap-3">
+                                            <MapPin
+                                                size={18}
+                                                className="mt-1 flex-shrink-0 text-gray-400"
+                                            />
+                                            <span>{profile.location}</span>
+                                        </div>
+                                    )}
+                                    {profile.emails.map(e => (
+                                        <div
+                                            key={e.id}
+                                            className="flex items-start gap-3"
+                                        >
+                                            <Mail
+                                                size={18}
+                                                className="mt-1 flex-shrink-0 text-gray-400"
+                                            />
+                                            <a
+                                                href={`mailto:${e.email}`}
+                                                className="break-all hover:underline"
+                                            >
+                                                {e.email}
+                                            </a>
+                                        </div>
+                                    ))}
+                                    {profile.phones.map(p => (
+                                        <div
+                                            key={p.id}
+                                            className="flex items-start gap-3"
+                                        >
+                                            <Phone
+                                                size={18}
+                                                className="mt-1 flex-shrink-0 text-gray-400"
+                                            />
+                                            <span>{p.phone}</span>
+                                        </div>
+                                    ))}
+                                    {profile.additionalContactInfo && (
+                                        <div className="mt-3 border-t border-gray-100 pt-3">
+                                            <h3 className="mb-2 font-semibold text-gray-800">
+                                                ช่องทางติดต่อเพิ่มเติม
+                                            </h3>
+                                            <div className="flex items-start gap-3">
+                                                <Linkify
+                                                    text={
+                                                        profile.additionalContactInfo
+                                                    }
+                                                />
                                             </div>
-                                        ))
-                                    ) : (
-                                        <p className="py-4 text-center text-sm text-gray-400">ยังไม่มีนักศึกษาที่สนใจ</p>
+                                        </div>
                                     )}
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="rounded-lg border border-gray-200 bg-white p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold">
+                                        รายละเอียดการทำงาน
+                                    </h2>
+                                    <button
+                                        onClick={() =>
+                                            setIsWorkDetailsSidebarOpen(true)
+                                        }
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-500 text-white ..."
+                                        aria-label="แก้ไขรายละเอียดการทำงาน"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="space-y-3 text-sm text-gray-700">
+                                    <p>
+                                        <span className="font-semibold">
+                                            รูปแบบ:
+                                        </span>{' '}
+                                        {getWorkArrangementText(
+                                            profile.workArrangement
+                                        )}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            วันทำงาน:
+                                        </span>{' '}
+                                        {profile.workingDays || '-'}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            เวลาทำงาน:
+                                        </span>{' '}
+                                        {profile.workingHours || '-'}
+                                    </p>
+                                    {profile.workPolicy && (
+                                        <div className="pt-2">
+                                            <h3 className="font-semibold">
+                                                รายละเอียดเพิ่มเติม:
+                                            </h3>
+                                            <p className="whitespace-pre-wrap">
+                                                {profile.workPolicy}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* การ์ดข้อมูลทางทะเบียน */}
+                            <div className="rounded-lg border border-gray-200 bg-white p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-xl font-semibold text-gray-800">
+                                        ข้อมูลทางทะเบียน
+                                    </h2>
+                                    <button
+                                        onClick={() =>
+                                            setIsRegistrationSidebarOpen(true)
+                                        }
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-500 text-white transition-transform duration-200 ease-in-out hover:scale-110 hover:bg-teal-600 focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 focus:outline-none"
+                                        aria-label="แก้ไขข้อมูลทางทะเบียน"
+                                    >
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"
+                                            />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm text-gray-700 md:grid-cols-2">
+                                    <p>
+                                        <span className="font-semibold">
+                                            ชื่อนิติบุคคล:
+                                        </span>{' '}
+                                        {profile.legalName || '-'}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            ประเภทนิติบุคคล:
+                                        </span>{' '}
+                                        {profile.companyType || '-'}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            เลขทะเบียน:
+                                        </span>{' '}
+                                        {profile.registrationNumber || '-'}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            จังหวัด:
+                                        </span>{' '}
+                                        {profile.province || '-'}
+                                    </p>
+                                    <p className="col-span-2">
+                                        <span className="font-semibold">
+                                            ประเภทธุรกิจ:
+                                        </span>{' '}
+                                        {profile.businessTypeName || '-'}
+                                    </p>
+                                    <p className="col-span-2">
+                                        <span className="font-semibold">
+                                            ทุนจดทะเบียน:
+                                        </span>{' '}
+                                        {profile.registeredCapital?.toLocaleString(
+                                            'th-TH'
+                                        ) || '-'}{' '}
+                                        บาท
+                                    </p>
+                                    
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* --- คอลัมน์ขวา --- */}
+                        <div className="space-y-6">
+                            {/* การ์ดรายชื่อบุคคลที่สนใจ */}
+                            <div className="rounded-lg border border-gray-200 bg-white p-6">
+                                <div className="mb-4 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <User className="h-5 w-5 text-gray-600" />
+                                        <h2 className="text-lg font-semibold text-gray-800">
+                                            รายชื่อบุคคลที่สนใจ
+                                        </h2>
+                                    </div>
+                                    <span className="text-sm text-gray-500">
+                                        {interestedStudents.length} คน
+                                    </span>
+                                </div>
+                                {isLoading ? (
+                                    <p className="py-4 text-center text-gray-500">
+                                        กำลังโหลดรายชื่อ...
+                                    </p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {interestedStudents.length > 0 ? (
+                                            interestedStudents.map(
+                                                ({ id, student }) => (
+                                                    <div
+                                                        key={id}
+                                                        className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md"
+                                                    >
+                                                        <div className="space-y-1 text-base">
+                                                            <p className="text-gray-800">
+                                                                <span className="font-semibold">
+                                                                    ชื่อ:
+                                                                </span>{' '}
+                                                                {
+                                                                    student.fullName
+                                                                }
+                                                            </p>
+                                                            <p className="text-gray-800">
+                                                                <span className="font-semibold">
+                                                                    ตำแหน่ง:
+                                                                </span>
+                                                                <span className="text-teal-600">
+                                                                    {' '}
+                                                                    {student.desiredPosition ||
+                                                                        'ไม่ระบุ'}
+                                                                </span>
+                                                            </p>
+                                                            <p className="text-gray-800">
+                                                                <span className="font-semibold">
+                                                                    มหาวิทยาลัย:
+                                                                </span>{' '}
+                                                                {student.universityName || 'ไม่ระบุ'}
+                                                            </p>
+                                                            <p className="text-gray-800">
+                                                                <span className="font-semibold">
+                                                                    สาขาวิชา:
+                                                                </span>{' '}
+                                                                {student.major ||
+                                                                    'ไม่ระบุ'}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <Link
+                                                                to={`/students/${student.id}`}
+                                                                className="rounded-lg border border-teal-500 bg-white px-5 py-2 text-sm font-medium text-teal-600 shadow-sm transition-colors hover:bg-teal-50"
+                                                            >
+                                                                ดูโปรไฟล์
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            )
+                                        ) : (
+                                            <p className="py-4 text-center text-sm text-gray-400">
+                                                ยังไม่มีนักศึกษาที่สนใจ
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-
                 </div>
-            </div>
             </div>
 
             <Sidebar
@@ -351,6 +565,16 @@ const CompanyPage: React.FC = () => {
                     currentVideoUrl={profile?.videoUrl || null}
                     onUpdate={fetchData}
                     onClose={() => setIsVideoSidebarOpen(false)}
+                />
+            </Sidebar>
+            <Sidebar
+                openSidebar={isWorkDetailsSidebarOpen}
+                setOpenSidebar={setIsWorkDetailsSidebarOpen}
+            >
+                <WorkDetailsSide
+                    currentProfile={profile}
+                    onUpdate={fetchData}
+                    onClose={() => setIsWorkDetailsSidebarOpen(false)}
                 />
             </Sidebar>
         </>

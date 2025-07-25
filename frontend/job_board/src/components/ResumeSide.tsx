@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface ResumeSideProps {
     onUpdate: (updatedProfile: any) => void;
@@ -19,7 +20,7 @@ const ResumeSide: React.FC<ResumeSideProps> = ({ onUpdate, onClose }) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file) {
-            alert('กรุณาเลือกไฟล์เรซูเม่ที่ต้องการอัปโหลด');
+            toast.error('กรุณาเลือกไฟล์เรซูเม่ที่ต้องการอัปโหลด');
             return;
         }
         setIsUploading(true);
@@ -33,7 +34,7 @@ const ResumeSide: React.FC<ResumeSideProps> = ({ onUpdate, onClose }) => {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            alert('เพิ่มไฟล์เรซูเม่สำเร็จ!');
+            toast.success('เพิ่มไฟล์เรซูเม่สำเร็จ!');
             
             // ดึงข้อมูลโปรไฟล์ล่าสุดเพื่ออัปเดตหน้าเว็บ
             const response = await api.get('/profiles/candidate/me');
@@ -42,7 +43,7 @@ const ResumeSide: React.FC<ResumeSideProps> = ({ onUpdate, onClose }) => {
 
         } catch (error) {
             console.error("Failed to upload resume:", error);
-            alert('เกิดข้อผิดพลาดในการอัปโหลด');
+            toast.error('เกิดข้อผิดพลาดในการอัปโหลด');
         } finally {
             setIsUploading(false);
         }

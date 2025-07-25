@@ -4,6 +4,7 @@ import api from '../services/api';
 import { Link } from 'react-router-dom';
 import ResumeAnalysisCard from '../components/ResumeAnalysisCard';
 import PortfolioSide from '../components/PortfolioSide';
+import toast from 'react-hot-toast';
 
 import {
     ProfileHeader,
@@ -45,7 +46,7 @@ interface CandidateProfile {
     workHistory: any[];
     major: string | null;
     studyYear: number | null;
-    internshipApplications: any[];
+
     interests?: {
         createdAt: string;
         company: {
@@ -55,10 +56,17 @@ interface CandidateProfile {
             businessTypeName: string | null;
             province: string | null;
             registeredCapital: number | null;
+            workArrangement: string | null;
         };
     }[];
     isInterested?: boolean;
     portfolioUrl: string | null;
+    positionOfInterest: string | null;
+    universityName: string | null;
+    startDate: string | null; // ใน frontend จะเป็น string ก่อนแปลง
+    endDate: string | null;
+    reason: string | null;
+    internshipType: string | null;
 }
 
 interface Skill {
@@ -188,29 +196,25 @@ const ProfilePage: React.FC = () => {
     };
 
     const handleDeleteWorkHistory = async (workHistoryId: string) => {
-        if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?')) return;
         try {
             await api.delete(`/work-history/${workHistoryId}`);
-            alert('ลบข้อมูลเรียบร้อย');
+            toast.success('ลบข้อมูลเรียบร้อย');
             fetchProfile(); // เรียกข้อมูลใหม่
         } catch (error) {
             console.error('Failed to delete work history:', error);
-            alert('เกิดข้อผิดพลาดในการลบข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการลบข้อมูล');
         }
     };
 
     const handleDeleteCertificate = async (fileId: string) => {
-        if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์นี้?')) {
-            return;
-        }
         try {
             await api.delete(`/certificate-files/${fileId}`);
-            alert('ลบไฟล์เรียบร้อย');
+            toast.success('ลบไฟล์เรียบร้อย');
             const response = await api.get('/profiles/candidate/me');
             handleProfileUpdate(response.data);
         } catch (error) {
             console.error('Failed to delete certificate file:', error);
-            alert('เกิดข้อผิดพลาดในการลบไฟล์');
+            toast.error('เกิดข้อผิดพลาดในการลบไฟล์');
         }
     };
 
@@ -234,10 +238,10 @@ const ProfilePage: React.FC = () => {
             );
             setProfile(response.data);
 
-            alert('อัปเดตข้อมูลสำเร็จ!');
+            toast.success('อัปเดตข้อมูลสำเร็จ!');
         } catch (error) {
             console.error('Failed to save header data:', error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 
@@ -247,39 +251,37 @@ const ProfilePage: React.FC = () => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // 1. สร้าง FormData object
+        //สร้าง FormData object
         const formData = new FormData();
-        // 2. เพิ่มไฟล์เข้าไปใน formData โดยตั้งชื่อ field ว่า 'file' ให้ตรงกับที่ backend กำหนด
+        //เพิ่มไฟล์เข้าไปใน formData โดยตั้งชื่อ field ว่า 'file' ให้ตรงกับที่ backend กำหนด
         formData.append('file', file);
 
-        alert(`กำลังอัปโหลดไฟล์: ${file.name}`);
+        toast.success(`กำลังอัปโหลดไฟล์: ${file.name}`);
         try {
-            // 3. ส่ง formData ไปที่ API และระบุ header ให้ถูกต้อง
+            //ส่ง formData ไปที่ API และระบุ header ให้ถูกต้อง
             await api.post('/contact-files', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
             });
 
-            // ดึงข้อมูลโปรไฟล์มาใหม่เพื่ออัปเดต UI
+            //ดึงข้อมูลโปรไฟล์มาใหม่เพื่ออัปเดต UI
             const response = await api.get('/profiles/candidate/me');
             handleProfileUpdate(response.data);
         } catch (error) {
             console.error('Failed to upload resume:', error);
-            alert('เกิดข้อผิดพลาดในการอัปโหลดเรซูเม่');
+            toast.error('เกิดข้อผิดพลาดในการอัปโหลดเรซูเม่');
         }
     };
     const handleRemoveResume = async (fileId: string) => {
-        if (!window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์เรซูเม่นี้?')) {
-            return;
-        }
         try {
             await api.delete(`/contact-files/${fileId}`);
             const response = await api.get('/profiles/candidate/me');
             handleProfileUpdate(response.data);
+            toast.success('ลบไฟล์สำเร็จ');
         } catch (error) {
             console.error('Failed to remove resume:', error);
-            alert('เกิดข้อผิดพลาดในการลบเรซูเม่');
+            toast.error('เกิดข้อผิดพลาดในการลบเรซูเม่');
         }
     };
 
@@ -317,11 +319,11 @@ const ProfilePage: React.FC = () => {
             level: s.rating,
         })),
         videoUrl: profile.videoUrl,
-        certificateFiles: [], // Placeholder
-        contactFiles: [], // Placeholder
+        certificateFiles: [],
+        contactFiles: [],
     };
 
-    const getInternshipTypeText = (type: string) => {
+    const getInternshipTypeText = (type: string | null) => {
         switch (type) {
             case 'FULL_TIME':
                 return 'พนักงานประจำ (Full-time)';
@@ -400,6 +402,16 @@ const ProfilePage: React.FC = () => {
                                                         'th-TH'
                                                     )}{' '}
                                                     บาท
+                                                </p>
+                                            )}
+                                            {interest.company
+                                                .workArrangement && (
+                                                <p className="text-sm text-gray-500">
+                                                    รูปแบบการทำงาน:&nbsp;&nbsp;
+                                                    {getInternshipTypeText(
+                                                        interest.company
+                                                            .workArrangement
+                                                    )}
                                                 </p>
                                             )}
                                         </div>
@@ -697,17 +709,9 @@ const ProfilePage: React.FC = () => {
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() =>
-                                            setIsAnalysisSidebarOpen(true)
-                                        } // สมมติว่า state นี้ชื่อ isAnalysisSidebarOpen
-                                        className="text-xs font-semibold text-teal-600 hover:underline"
-                                    >
-                                        วิเคราะห์จาก PDF
-                                    </button>
-                                    <button
-                                        onClick={() =>
                                             setIsSkillsFormOpen(true)
                                         }
-                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white transition-transform duration-200 ease-in-out hover:scale-110 hover:bg-blue-600"
+                                        className="flex h-8 w-8 items-center justify-center rounded-full bg-teal-500 text-white transition-transform duration-200 ease-in-out hover:scale-110 hover:bg-teal-600"
                                         aria-label="แก้ไข ทักษะ"
                                     >
                                         <svg
@@ -761,67 +765,60 @@ const ProfilePage: React.FC = () => {
                         </ProfileCard>
                         <ProfileCard
                             title="รายละเอียดการฝึกงาน"
-                            placeholder="คลิก 'เพิ่มข้อมูล' เพื่อกรอกรายละเอียดการสมัครฝึกงาน"
+                            placeholder="คลิก 'แก้ไข' เพื่อกรอกรายละเอียดความสนใจในการฝึกงาน"
                             onEditClick={() => setIsApplicationFormOpen(true)}
                         >
-                            {/* ตรวจสอบว่ามีข้อมูลใบสมัครหรือไม่ */}
-                            {profile.internshipApplications &&
-                            profile.internshipApplications.length > 0 ? (
+                            {/* ตรวจสอบว่ามีข้อมูลหรือไม่ ถ้ามีให้แสดงผล */}
+                            {profile.positionOfInterest ? (
                                 <div className="space-y-2 text-sm text-gray-800">
-                                    {/* โดยปกติจะมีแค่ 1 record สำหรับ 1 บริษัท */}
-                                    {profile.internshipApplications.map(
-                                        (app: any) => (
-                                            <div key={app.id}>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        ตำแหน่งงานที่สนใจ :
-                                                    </span>{' '}
-                                                    {app.positionOfInterest}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        รูปแบบ :
-                                                    </span>{' '}
-                                                    {getInternshipTypeText(
-                                                        app.internshipType
-                                                    )}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        ชื่อมหาวิทยาลัย /
-                                                        สถานศึกษา :
-                                                    </span>{' '}
-                                                    {app.universityName}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        วันที่เริ่ม :
-                                                    </span>{' '}
-                                                    {new Date(
-                                                        app.startDate
-                                                    ).toLocaleDateString(
-                                                        'th-TH'
-                                                    )}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        วันที่สิ้นสุด :
-                                                    </span>{' '}
-                                                    {new Date(
-                                                        app.endDate
-                                                    ).toLocaleDateString(
-                                                        'th-TH'
-                                                    )}
-                                                </p>
-                                                <p className="mt-2 font-semibold">
-                                                    เหตุผลที่อยากฝึกงานกับเรา :
-                                                </p>
-                                                <p className="whitespace-pre-wrap text-gray-600">
-                                                    {app.reason}
-                                                </p>
-                                            </div>
-                                        )
-                                    )}
+                                    <p>
+                                        <span className="font-semibold">
+                                            ตำแหน่งงานที่สนใจ :
+                                        </span>{' '}
+                                        {profile.positionOfInterest}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            รูปแบบ :
+                                        </span>{' '}
+                                        {getInternshipTypeText(
+                                            profile.internshipType
+                                        )}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            ชื่อมหาวิทยาลัย / สถานศึกษา :
+                                        </span>{' '}
+                                        {profile.universityName}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            วันที่เริ่ม :
+                                        </span>{' '}
+                                        {profile.startDate
+                                            ? new Date(
+                                                  profile.startDate
+                                              ).toLocaleDateString('th-TH')
+                                            : '-'}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            วันที่สิ้นสุด :
+                                        </span>{' '}
+                                        {profile.endDate
+                                            ? new Date(
+                                                  profile.endDate
+                                              ).toLocaleDateString('th-TH')
+                                            : '-'}
+                                    </p>
+                                    <div className="mt-2 border-t pt-2">
+                                        <p className="font-semibold">
+                                            เหตุผลที่อยากฝึกงานกับเรา :
+                                        </p>
+                                        <p className="whitespace-pre-wrap text-gray-600">
+                                            {profile.reason}
+                                        </p>
+                                    </div>
                                 </div>
                             ) : null}
                         </ProfileCard>
@@ -894,9 +891,7 @@ const ProfilePage: React.FC = () => {
                 setOpenSidebar={setIsApplicationFormOpen}
             >
                 <InternshipApplicationSide
-                    currentApplication={
-                        profile.internshipApplications?.[0] || null
-                    }
+                    currentProfile={profile}
                     onUpdate={handleProfileUpdate}
                     onClose={() => setIsApplicationFormOpen(false)}
                 />

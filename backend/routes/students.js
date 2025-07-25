@@ -13,56 +13,63 @@ router.get("/", async (req, res) => {
       skills,
       studyYear,
       studentCode,
+      internshipType,
       page = 1,
-      limit = 10,
+      limit = 12,
       sort = "desc",
     } = req.query;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const where = {
-      // ค้นหาเฉพาะ CandidateProfile ที่มี InternshipApplication อย่างน้อย 1 รายการ
-      internshipApplications: {
-        some: {}, // ใส่ object ว่างๆ ใน some หมายถึง "ขอแค่มีอย่างน้อยหนึ่งรายการ"
-      },
-    };
+    const whereClause = [];
+
+    whereClause.push({ desiredPosition: { not: null } });
 
     if (position) {
-      where.desiredPosition = {
-        contains: position,
-        mode: "insensitive",
-      };
+      whereClause.push({
+        desiredPosition: {
+          contains: position,
+          mode: "insensitive",
+        },
+      });
     }
 
     if (skills) {
       const skillList = skills.split(",").map((skill) => skill.trim());
-      where.skills = {
-        every: {
-          skill: {
-            name: {
-              in: skillList,
-              mode: "insensitive",
+      whereClause.push({
+        skills: {
+          every: {
+            skill: {
+              name: {
+                in: skillList,
+                mode: "insensitive",
+              },
             },
           },
         },
-      };
+      });
     }
 
     if (studyYear) {
       const year = parseInt(studyYear, 10);
       if (!isNaN(year)) {
-        where.studyYear = year;
+        whereClause.push({ studyYear: year });
       }
     }
 
     if (studentCode) {
-      where.studentCode = {
-        equals: studentCode,
-      };
+      whereClause.push({
+        studentCode: {
+          equals: studentCode,
+        },
+      });
+    }
+    
+    if (internshipType) {
+      whereClause.push({ internshipType: internshipType });
     }
 
-    // สร้างเงื่อนไขการเรียงลำดับ
     let orderBy = {};
     if (sort === "asc") {
       orderBy = { createdAt: "asc" };
@@ -70,8 +77,9 @@ router.get("/", async (req, res) => {
       orderBy = { updatedAt: "desc" };
     }
 
+
     const students = await prisma.candidateProfile.findMany({
-      where,
+      where: { AND: whereClause },
       skip,
       take: limitNum,
       select: {
@@ -93,19 +101,14 @@ router.get("/", async (req, res) => {
             },
           },
         },
-        internshipApplications: {
-          select: {
-            internshipType: true,
-            startDate: true,
-            endDate: true,
-          },
-        },
+        internshipType: true,
+        startDate: true,
+        endDate: true,
       },
-      // ✅ แก้ไขให้ใช้ตัวแปร orderBy ที่เราสร้างขึ้น
       orderBy: orderBy,
     });
 
-    const totalStudents = await prisma.candidateProfile.count({ where });
+    const totalStudents = await prisma.candidateProfile.count({ where: { AND: whereClause } });
 
     res.json({
       data: students,
@@ -141,7 +144,6 @@ router.get("/:id", protect, authorize("COMPANY"), async (req, res) => {
         },
         certificateFiles: true,
         contactFiles: true,
-        internshipApplications: true,
       },
     });
 

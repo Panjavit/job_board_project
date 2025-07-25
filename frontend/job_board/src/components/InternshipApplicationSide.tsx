@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface InternshipApplicationSideProps {
-    currentApplication: any | null;
+    currentProfile: any | null;
     onClose: () => void;
     onUpdate: (newProfile: any) => void;
 }
 
-// แก้ไขตรงนี้: เพิ่ม currentApplication เข้าไปใน props ที่จะใช้งาน
-const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ currentApplication, onClose, onUpdate }) => {
+const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ currentProfile, onClose, onUpdate }) => {
     const [formData, setFormData] = useState({
         positionOfInterest: '',
         universityName: '',
@@ -20,18 +20,18 @@ const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ c
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        // เมื่อมี currentApplication ถูกส่งเข้ามา (ตอนกดแก้ไข)
-        if (currentApplication) {
+        //เมื่อมี currentApplication ถูกส่งเข้ามา (ตอนกดแก้ไข)
+        if (currentProfile) {
             setFormData({
-                positionOfInterest: currentApplication.positionOfInterest || '',
-                universityName: currentApplication.universityName || '',
-                startDate: currentApplication.startDate ? new Date(currentApplication.startDate).toISOString().split('T')[0] : '',
-                endDate: currentApplication.endDate ? new Date(currentApplication.endDate).toISOString().split('T')[0] : '',
-                reason: currentApplication.reason || '',
-                internshipType: currentApplication.internshipType || 'INTERNSHIP',
+                positionOfInterest: currentProfile.positionOfInterest || '',
+                universityName: currentProfile.universityName || '',
+                startDate: currentProfile.startDate ? new Date(currentProfile.startDate).toISOString().split('T')[0] : '',
+                endDate: currentProfile.endDate ? new Date(currentProfile.endDate).toISOString().split('T')[0] : '',
+                reason: currentProfile.reason || '',
+                internshipType: currentProfile.internshipType || 'INTERNSHIP',
             });
         }
-    }, [currentApplication]);
+    }, [currentProfile]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -42,7 +42,7 @@ const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ c
         setIsSubmitting(true);
         try {
             await api.post(`/applications`, formData);
-            alert('บันทึกข้อมูลการสมัครฝึกงานเรียบร้อย!');
+            toast.success('บันทึกข้อมูลการสมัครฝึกงานเรียบร้อย!');
             
             const response = await api.get('/profiles/candidate/me');
             onUpdate(response.data);
@@ -50,7 +50,7 @@ const InternshipApplicationSide: React.FC<InternshipApplicationSideProps> = ({ c
             onClose();
         } catch (error: any) {
             const message = error.response?.data?.message || 'เกิดข้อผิดพลาดในการส่งใบสมัคร';
-            alert(message);
+            toast.error(message);
         } finally {
             setIsSubmitting(false);
         }

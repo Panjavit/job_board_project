@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface PersonalInfoFormProps {
     currentProfile: any;
@@ -81,7 +82,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             //ส่งข้อมูลไปอัปเดต (PATCH)
             await api.patch('/profiles/candidate/me/personal-info', payload);
 
-            alert('อัปเดตข้อมูลส่วนตัวสำเร็จ!');
+            toast.success('อัปเดตข้อมูลส่วนตัวสำเร็จ!');
 
             //ดึงข้อมูลโปรไฟล์ทั้งหมดมาใหม่ (GET)
             const response = await api.get('/profiles/candidate/me');
@@ -91,7 +92,7 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
             onClose();
         } catch (error) {
             console.error('Failed to update personal info:', error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 

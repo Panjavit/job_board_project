@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import api from '../services/api';
 import { FileUp, BrainCircuit, Loader2 } from 'lucide-react';
 import * as pdfjs from 'pdfjs-dist';
+import toast from 'react-hot-toast';
 
 // ตั้งค่า Worker เพื่อให้ library ทำงานในเบราว์เซอร์ได้
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -23,7 +24,7 @@ const ResumeAnalysisCard: React.FC<ResumeAnalysisCardProps> = ({ onAnalysisCompl
         if (!file) return;
 
         if (file.type !== 'application/pdf') {
-            alert('กรุณาเลือกไฟล์ PDF เท่านั้น');
+            toast.error('กรุณาเลือกไฟล์ PDF เท่านั้น');
             e.target.value = ''; // รีเซ็ตถ้าไฟล์ไม่ใช่ PDF
             return;
         }
@@ -49,18 +50,15 @@ const ResumeAnalysisCard: React.FC<ResumeAnalysisCardProps> = ({ onAnalysisCompl
                 level: s.rating,
             }));
 
-            alert('วิเคราะห์ทักษะสำเร็จ!');
+            toast.success('วิเคราะห์ทักษะสำเร็จ!');
             onAnalysisComplete(skills);
 
         } catch (error) {
             console.error("PDF processing or API call failed:", error);
-            alert("เกิดข้อผิดพลาดในการวิเคราะห์ไฟล์ PDF");
+            toast.error("เกิดข้อผิดพลาดในการวิเคราะห์ไฟล์ PDF");
         } finally {
             setIsAnalyzing(false);
-            // --- ส่วนที่แก้ไข (สำคัญที่สุด) ---
-            // รีเซ็ตค่าใน input file ทุกครั้งที่ทำงานเสร็จ
-            e.target.value = ''; 
-            // --- จบส่วนที่แก้ไข ---
+            e.target.value = '';
         }
     };
 

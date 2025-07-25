@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface CompanyProfile {
     province: string | null;
@@ -52,12 +53,12 @@ const CompanyRegistrationSide: React.FC<CompanyRegistrationSideProps> = ({
         try {
             // เรายังคงใช้ API endpoint เดิม เพราะมันสามารถอัปเดตข้อมูลบางส่วนได้
             const response = await api.put('/profiles/company/me', formData);
-            alert('อัปเดตข้อมูลทางทะเบียนสำเร็จ!');
+            toast.success('อัปเดตข้อมูลทางทะเบียนสำเร็จ!');
             onUpdate(response.data);
             onClose();
         } catch (error) {
             console.error('Failed to update company registration info:', error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 

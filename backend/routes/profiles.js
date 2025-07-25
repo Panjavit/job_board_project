@@ -29,7 +29,6 @@ router.get(
           },
           certificateFiles: true,
           contactFiles: true,
-          internshipApplications: true,
           interests: {
             include: {
               company: {
@@ -40,6 +39,7 @@ router.get(
                   businessTypeName: true,
                   province: true,
                   registeredCapital: true,
+                  workArrangement: true,
                 },
               },
             },
@@ -101,7 +101,7 @@ router.patch(
       if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
       if (videoDescription !== undefined)
         dataToUpdate.videoDescription = videoDescription;
-       if (portfolioUrl !== undefined) {
+      if (portfolioUrl !== undefined) {
         dataToUpdate.portfolioUrl = portfolioUrl;
       }
 
@@ -128,7 +128,7 @@ router.put(
   async (req, res) => {
     const { skills } = req.body; // รับแค่ skills
 
-    // 1. ตรวจสอบข้อมูลเบื้องต้น
+    //ตรวจสอบข้อมูลเบื้องต้น
     if (!Array.isArray(skills)) {
       return res.status(400).json({ message: "Skills must be an array" });
     }
@@ -178,7 +178,6 @@ router.put(
           },
           certificateFiles: true,
           contactFiles: true,
-          internshipApplications: true,
         },
       });
       res.json(finalProfile);
@@ -247,42 +246,43 @@ router.get("/company/me", protect, authorize("COMPANY"), async (req, res) => {
 // @route   PUT /api/profiles/company/me (Update current logged-in company's profile)
 router.put("/company/me", protect, authorize("COMPANY"), async (req, res) => {
   try {
+    const dataToUpdate = {};
     const {
-      companyName,
-      about,
-      location,
-      recruiterName,
-      recruiterPosition,
-      additionalContactInfo,
-      province,
-      registrationNumber,
-      legalName,
-      companyType,
-      businessTypeName,
-      registeredCapital,
-      videoUrl,
+      companyName, about, location, recruiterName, recruiterPosition,
+      additionalContactInfo, province, registrationNumber, legalName,
+      companyType, businessTypeName, registeredCapital, totalRevenue, videoUrl,
+      workArrangement, workingDays, workingHours, workPolicy
     } = req.body;
-    const updateProfile = await prisma.companyProfile.update({
+    if (companyName !== undefined) dataToUpdate.companyName = companyName;
+    if (about !== undefined) dataToUpdate.about = about;
+    if (location !== undefined) dataToUpdate.location = location;
+    if (recruiterName !== undefined) dataToUpdate.recruiterName = recruiterName;
+    if (recruiterPosition !== undefined) dataToUpdate.recruiterPosition = recruiterPosition;
+    if (additionalContactInfo !== undefined) dataToUpdate.additionalContactInfo = additionalContactInfo;
+    if (province !== undefined) dataToUpdate.province = province;
+    if (registrationNumber !== undefined) dataToUpdate.registrationNumber = registrationNumber;
+    if (legalName !== undefined) dataToUpdate.legalName = legalName;
+    if (companyType !== undefined) dataToUpdate.companyType = companyType;
+    if (businessTypeName !== undefined) dataToUpdate.businessTypeName = businessTypeName;
+    if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl;
+    if (workArrangement !== undefined) dataToUpdate.workArrangement = workArrangement;
+    if (workingDays !== undefined) dataToUpdate.workingDays = workingDays;
+    if (workingHours !== undefined) dataToUpdate.workingHours = workingHours;
+    if (workPolicy !== undefined) dataToUpdate.workPolicy = workPolicy;
+
+    if (registeredCapital !== undefined) {
+      dataToUpdate.registeredCapital = registeredCapital ? parseFloat(registeredCapital) : null;
+    }
+    if (totalRevenue !== undefined) {
+      dataToUpdate.totalRevenue = totalRevenue ? parseFloat(totalRevenue) : null;
+    }
+
+    const updatedProfile = await prisma.companyProfile.update({
       where: { id: req.user.profileId },
-      data: {
-        companyName: companyName,
-        about: about,
-        location: location,
-        recruiterName: recruiterName,
-        recruiterPosition: recruiterPosition,
-        additionalContactInfo,
-        province,
-        registrationNumber,
-        legalName,
-        companyType,
-        businessTypeName,
-        registeredCapital: registeredCapital
-          ? parseFloat(registeredCapital)
-          : null,
-        videoUrl: videoUrl,
-      },
+      data: dataToUpdate,
     });
-    res.json(updateProfile);
+
+    res.json(updatedProfile);
   } catch (error) {
     console.error("Error in PUT /company/me:", error);
     res.status(500).send("Server Error");
@@ -350,12 +350,7 @@ router.get(
               desiredPosition: true,
               major: true,
               profileImageUrl: true,
-              internshipApplications: {
-                select: {
-                  universityName: true,
-                },
-                take: 1, // ดึงมาแค่ 1 record ก็พอ
-              },
+              universityName: true,
             },
           },
         },
@@ -389,6 +384,10 @@ router.get("/company/:id", async (req, res) => {
         businessTypeName: true,
         registeredCapital: true,
         videoUrl: true,
+        workArrangement: true,
+        workingDays: true, 
+        workingHours: true, 
+        workPolicy: true, 
         emails: { select: { email: true } },
         phones: { select: { phone: true } },
       },

@@ -24,6 +24,10 @@ interface PublicCompanyProfile {
     businessTypeName: string | null;
     registeredCapital: number | null;
     videoUrl: string | null;
+    workArrangement: string | null;
+    workingDays: string | null;
+    workingHours: string | null;
+    workPolicy: string | null;
 }
 
 const PublicCompanyProfilePage: React.FC = () => {
@@ -50,6 +54,18 @@ const PublicCompanyProfilePage: React.FC = () => {
             fetchCompanyProfile();
         }
     }, [companyId]);
+
+    const getWorkArrangementText = (arrangement: string | null) => {
+        switch (arrangement) {
+            case 'HYBRID':
+                return 'ไฮบริด (Hybrid)';
+            case 'REMOTE':
+                return 'ทำงานทางไกล (Remote)';
+            case 'ONSITE':
+            default:
+                return 'เข้าออฟฟิศ (On-site)';
+        }
+    };
 
     if (isLoading)
         return <div className="p-10 text-center">กำลังโหลดข้อมูลบริษัท...</div>;
@@ -122,6 +138,44 @@ const PublicCompanyProfilePage: React.FC = () => {
                                 {profile.about ||
                                     'ยังไม่มีข้อมูลเกี่ยวกับบริษัท'}
                             </p>
+                        </div>
+
+                        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                            <h2 className="mb-4 text-xl font-semibold text-gray-800">
+                                รายละเอียดการทำงาน
+                            </h2>
+                            <div className="space-y-3 text-sm text-gray-700">
+                                <p>
+                                    <span className="font-semibold">
+                                        รูปแบบ:
+                                    </span>{' '}
+                                    {getWorkArrangementText(
+                                        profile.workArrangement
+                                    )}
+                                </p>
+                                <p>
+                                    <span className="font-semibold">
+                                        วันทำงาน:
+                                    </span>{' '}
+                                    {profile.workingDays || '-'}
+                                </p>
+                                <p>
+                                    <span className="font-semibold">
+                                        เวลาทำงาน:
+                                    </span>{' '}
+                                    {profile.workingHours || '-'}
+                                </p>
+                                {profile.workPolicy && (
+                                    <div className="pt-2">
+                                        <h3 className="font-semibold">
+                                            รายละเอียดเพิ่มเติม:
+                                        </h3>
+                                        <p className="whitespace-pre-wrap">
+                                            {profile.workPolicy}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* การ์ดข้อมูลทางทะเบียน */}

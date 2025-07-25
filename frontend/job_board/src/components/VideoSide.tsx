@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface VideoSideProps {
     currentProfile: any;
@@ -25,13 +26,13 @@ const VideoSide: React.FC<VideoSideProps> = ({ currentProfile, onUpdate, onClose
                 videoUrl: videoUrl,
                 videoDescription: videoDescription,
             });
-            alert('อัปเดตข้อมูลวิดีโอสำเร็จ!');
+            toast.success('อัปเดตข้อมูลวิดีโอสำเร็จ!');
             const response = await api.get('/profiles/candidate/me');
             onUpdate(response.data);
             onClose();
         } catch (error) {
             console.error("Failed to update video info:", error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 

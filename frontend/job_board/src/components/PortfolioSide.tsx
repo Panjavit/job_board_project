@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface PortfolioSideProps {
     currentPortfolioUrl: string | null;
@@ -20,12 +21,12 @@ const PortfolioSide: React.FC<PortfolioSideProps> = ({ currentPortfolioUrl, onUp
             await api.patch('/profiles/candidate/me/personal-info', {
                 portfolioUrl: portfolioUrl,
             });
-            alert('อัปเดตลิงก์ผลงานสำเร็จ!');
+            toast.success('อัปเดตลิงก์ผลงานสำเร็จ!');
             onUpdate();
             onClose();
         } catch (error) {
             console.error("Failed to update portfolio link:", error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 

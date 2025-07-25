@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface Skill {
     name: string;
@@ -127,7 +128,7 @@ const SkillsSide: React.FC<SkillsSideProps> = ({ currentSkills, desiredPosition,
         try {
             const response = await api.put('/profiles/candidate/me/skills', { skills: skillsToSave });
             onUpdate(response.data);
-            alert("บันทึกทักษะสำเร็จ!");
+            toast.success("บันทึกทักษะสำเร็จ!");
             onClose();
         } catch (error) {
             console.error("Failed to save skills:", error);

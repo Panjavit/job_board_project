@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface CertificateSideProps {
     onUpdate: (updatedProfile: any) => void;
@@ -20,7 +21,7 @@ const CertificateSide: React.FC<CertificateSideProps> = ({ onUpdate, onClose }) 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!file) {
-            alert('กรุณาเลือกไฟล์');
+            toast.error('กรุณาเลือกไฟล์');
             return;
         }
         setIsUploading(true);
@@ -36,14 +37,14 @@ const CertificateSide: React.FC<CertificateSideProps> = ({ onUpdate, onClose }) 
                 },
             });
 
-            alert('เพิ่มรางวัล/ใบประกาศสำเร็จ!');
+            toast.success('เพิ่มรางวัล/ใบประกาศสำเร็จ!');
             const response = await api.get('/profiles/candidate/me');
             onUpdate(response.data);
             onClose();
 
         } catch (error) {
             console.error("Failed to upload certificate:", error);
-            alert('เกิดข้อผิดพลาดในการอัปโหลด');
+            toast.error('เกิดข้อผิดพลาดในการอัปโหลด');
         } finally {
             setIsUploading(false);
         }

@@ -23,42 +23,49 @@ model User {
   updatedAt        DateTime          @updatedAt
   candidateProfile CandidateProfile?
   companyProfile   CompanyProfile?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
 }
 
 model CandidateProfile {
-  id                String        @id @default(cuid())
-  studentCode       String?       @unique
-  fullName          String    // เทียบเท่า name
-  contactEmail      String    // เทียบเท่า email
-  phoneNumber       String?   // เทียบเท่า phone
-  desiredPosition   String?   // เทียบเท่า position
-  bio               String?   @db.Text // เทียบเท่า about
-  lineUserId        String?
-  major             String?       // (แก้ไข) เพิ่มฟิลด์สำหรับเก็บ "สาขาวิชา"
-  studyYear         Int?          // (แก้ไข) เพิ่มฟิลด์สำหรับเก็บ "ชั้นปี" เป็นตัวเลข
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-  nickname          String?   // เพิ่ม: ชื่อเล่น
-  gender            String?   // เพิ่ม: เพศ
-  dateOfBirth       DateTime? // เพิ่ม: วันเกิด (เก็บเป็น DateTime)
-  profileImageUrl   String?   // เพิ่ม: สำหรับ profileImage
-  videoUrl          String?   // เปลี่ยนชื่อจาก youtubeIntroLink
-  videoDescription  String?
-  experience        String?    @db.Text // เพิ่ม: สำหรับ experience (ข้อความสรุป)
-  education         String?    @db.Text // เพิ่ม: สำหรับ education (ข้อความสรุป)
-  projects          String?    @db.Text // เพิ่ม: สำหรับ projects
-  achievements      String?    @db.Text // เพิ่ม: สำหรับ achievements
-  portfolioUrl    String?
+  id                String        @id @default(cuid())
+  studentCode       String?       @unique
+  fullName          String
+  contactEmail      String
+  phoneNumber       String?
+  desiredPosition   String?
+  bio               String?   @db.Text
+  lineUserId        String?
+  major             String?
+  studyYear         Int?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  nickname          String?
+  gender            String?
+  dateOfBirth       DateTime?
+  profileImageUrl   String?
+  videoUrl          String?
+  videoDescription  String?
+  experience        String?    @db.Text
+  education         String?    @db.Text
+  projects          String?    @db.Text
+  achievements      String?    @db.Text
+  portfolioUrl      String?
+  positionOfInterest String?
+  universityName     String?
+  startDate          DateTime?
+  endDate            DateTime?
+  reason             String?    @db.Text
+  internshipType     InternshipType? @default(INTERNSHIP)
 
   // ความสัมพันธ์
-  user      User          @relation(fields: [userId], references: [id])
-  userId    String        @unique
-  skills    UserSkill[]
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String        @unique
+  skills    UserSkill[]
   interests Interaction[] @relation("StudentInteractions")
-  workHistory WorkHistory[] // นักศึกษาหนึ่งคนมีได้หลายประวัติการทำงาน
+  workHistory WorkHistory[]
   certificateFiles CertificateFile[]
-  contactFiles     ContactFile[]
-  internshipApplications InternshipApplication[]
+  contactFiles     ContactFile[]
 }
 
 model CompanyProfile {
@@ -79,12 +86,15 @@ model CompanyProfile {
   businessTypeName     String? // ชื่อประเภทธุรกิจ
   registeredCapital    Float?  // ทุนจดทะเบียน
   videoUrl           String?
+  workArrangement  WorkArrangement? @default(ONSITE)
+  workingDays      String?
+  workingHours     String?
+  workPolicy       String? @db.Text
 
   // ความสัมพันธ์
   user      User          @relation(fields: [userId], references: [id])
   userId    String        @unique
   interests Interaction[] @relation("CompanyInteractions")
-  internshipApplications InternshipApplication[]
   emails              CompanyEmail[] 
   phones              CompanyPhone[] 
 }
@@ -153,36 +163,6 @@ model WorkHistory {
   candidateProfileId String
 }
 
-model InternshipApplication {
-  id                 String   @id @default(cuid())
-  positionOfInterest String
-  universityName     String
-  startDate          DateTime
-  endDate            DateTime
-  reason             String    @db.Text
-  status             ApplicationStatus @default(PENDING) // สถานะใบสมัคร
-  internshipType     InternshipType    @default(INTERNSHIP)
-
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  // ความสัมพันธ์: ใบสมัครนี้เป็นของใคร และสมัครไปที่บริษัทไหน
-  candidate          CandidateProfile @relation(fields: [candidateProfileId], references: [id])
-  candidateProfileId String
-
-  company            CompanyProfile   @relation(fields: [companyProfileId], references: [id])
-  companyProfileId   String
-
-  @@unique([candidateProfileId, companyProfileId]) // จำกัดให้ 1 คนสมัคร 1 บริษัทได้ครั้งเดียว
-}
-
-enum ApplicationStatus {
-  PENDING
-  REVIEWED
-  ACCEPTED
-  REJECTED
-}
-
 enum Role {
   CANDIDATE
   COMPANY
@@ -193,6 +173,12 @@ enum InternshipType {
   FULL_TIME
   PART_TIME
   INTERNSHIP
+}
+
+enum WorkArrangement {
+  ONSITE
+  HYBRID
+  REMOTE
 }
 
 model CompanyEmail {

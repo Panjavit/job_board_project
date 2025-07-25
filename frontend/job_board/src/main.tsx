@@ -17,6 +17,8 @@ import LineCallbackPage from './pages/LineCallbackPage.tsx';
 import PublicCompanyProfilePage from './pages/PublicCompanyProfilePage.tsx';
 import ChangePasswordPage from './pages/ChangePasswordPage.tsx';
 import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx';
+import ResetPasswordPage from './pages/ResetPasswordPage.tsx';
+import { Toaster } from 'react-hot-toast';
 
 const router = createBrowserRouter([
     { path: '/', element: <MainLayout><App /></MainLayout> },
@@ -27,6 +29,7 @@ const router = createBrowserRouter([
     { path: '/company/:companyId', element: <MainLayout><PublicCompanyProfilePage /></MainLayout> },
     { path: '/auth/line/callback', element: <LineCallbackPage /> },
     { path: '/forgot-password', element: <ForgotPasswordPage /> },
+    { path: '/reset-password/:token', element: <ResetPasswordPage /> },
     {
         path: '/profile',
         element: (
@@ -58,6 +61,7 @@ createRoot(document.getElementById('root')!).render(
         <GoogleOAuthProvider clientId="531518656629-o4hn12es3j77skt19gstioifn4npefpa.apps.googleusercontent.com">
             <AuthProvider>
                 <RouterProvider router={router} />
+                <Toaster position="top-right" />
             </AuthProvider>
         </GoogleOAuthProvider>
     </StrictMode>

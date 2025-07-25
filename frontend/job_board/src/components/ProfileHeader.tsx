@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface ProfileHeaderProps {
     user: CandidatProfile;
@@ -56,11 +57,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             await api.post('/profiles/candidate/me/avatar', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
-            alert('อัปโหลดรูปโปรไฟล์ใหม่สำเร็จ!');
+            toast.success('อัปโหลดรูปโปรไฟล์ใหม่สำเร็จ!');
             if (onProfileUpdate) onProfileUpdate();
         } catch (error) {
             console.error('Failed to upload profile image:', error);
-            alert('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
+            toast.error('เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
         }
     };
 

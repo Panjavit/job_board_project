@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 import { ProfileHeader, ProfileCard, VideoUploadCard } from '../components';
 
@@ -27,6 +28,12 @@ interface CandidateProfile {
     projects: string | null;
     achievements: string | null;
     portfolioUrl?: string | null;
+    positionOfInterest: string | null;
+    universityName: string | null;
+    startDate: string | null;
+    endDate: string | null;
+    reason: string | null;
+    internshipType: string | null;
 }
 
 //Interface สำหรับส่งข้อมูลให้ Header
@@ -85,8 +92,7 @@ const StudentDetailPage: React.FC = () => {
         );
     }
 
-    const getInternshipTypeText = (type: string | undefined) => {
-        // เพิ่ม | undefined เพื่อความปลอดภัย
+    const getInternshipTypeText = (type: string | undefined | null) => {
         switch (type) {
             case 'FULL_TIME':
                 return 'พนักงานประจำ';
@@ -107,10 +113,10 @@ const StudentDetailPage: React.FC = () => {
                 contactInstructions:
                     'Email: yanisa.ph@pi.financial \nPhone: 064-494-7456',
             });
-            alert('แสดงความสนใจสำเร็จ!');
+            toast.success('แสดงความสนใจสำเร็จ!');
             setIsInterested(true);
         } catch (error: any) {
-            alert(
+            toast.error(
                 `ไม่สามารถแสดงความสนใจได้: ${error.response?.data?.message || 'เกิดข้อผิดพลาด'}`
             );
             if (error.response?.status === 400) setIsInterested(true);
@@ -403,57 +409,50 @@ const StudentDetailPage: React.FC = () => {
                             )}
                         </ProfileCard>
                         <ProfileCard title="รายละเอียดการฝึกงาน">
-                            {profile.internshipApplications &&
-                            profile.internshipApplications.length > 0 ? (
+                            {profile.positionOfInterest ? (
                                 <div className="space-y-2 text-sm text-gray-800">
-                                    {profile.internshipApplications.map(
-                                        (app: any) => (
-                                            <div key={app.id}>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        ตำแหน่งที่สนใจ:
-                                                    </span>{' '}
-                                                    {app.positionOfInterest}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        รูปแบบ:
-                                                    </span>{' '}
-                                                    {getInternshipTypeText(
-                                                        app.internshipType
-                                                    )}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        ชื่อมหาวิทยาลัย:
-                                                    </span>{' '}
-                                                    {app.universityName}
-                                                </p>
-                                                <p>
-                                                    <span className="font-semibold">
-                                                        ช่วงเวลา:
-                                                    </span>{' '}
-                                                    {new Date(
-                                                        app.startDate
-                                                    ).toLocaleDateString(
-                                                        'th-TH'
-                                                    )}{' '}
-                                                    -{' '}
-                                                    {new Date(
-                                                        app.endDate
-                                                    ).toLocaleDateString(
-                                                        'th-TH'
-                                                    )}
-                                                </p>
-                                                <p className="mt-2 font-semibold">
-                                                    เหตุผลที่อยากฝึกงาน:
-                                                </p>
-                                                <p className="whitespace-pre-wrap text-gray-600">
-                                                    {app.reason}
-                                                </p>
-                                            </div>
-                                        )
-                                    )}
+                                    <p>
+                                        <span className="font-semibold">
+                                            ตำแหน่งที่สนใจ:
+                                        </span>{' '}
+                                        {profile.positionOfInterest}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            รูปแบบ:
+                                        </span>{' '}
+                                        {getInternshipTypeText(
+                                            profile.internshipType
+                                        )}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            ชื่อมหาวิทยาลัย:
+                                        </span>{' '}
+                                        {profile.universityName}
+                                    </p>
+                                    <p>
+                                        <span className="font-semibold">
+                                            ช่วงเวลา:
+                                        </span>{' '}
+                                        {profile.startDate
+                                            ? new Date(
+                                                  profile.startDate
+                                              ).toLocaleDateString('th-TH')
+                                            : '-'}{' '}
+                                        -{' '}
+                                        {profile.endDate
+                                            ? new Date(
+                                                  profile.endDate
+                                              ).toLocaleDateString('th-TH')
+                                            : '-'}
+                                    </p>
+                                    <p className="mt-2 font-semibold">
+                                        เหตุผลที่อยากฝึกงาน:
+                                    </p>
+                                    <p className="whitespace-pre-wrap text-gray-600">
+                                        {profile.reason}
+                                    </p>
                                 </div>
                             ) : (
                                 <p className="text-sm text-gray-500">
@@ -462,7 +461,6 @@ const StudentDetailPage: React.FC = () => {
                             )}
                         </ProfileCard>
                     </div>
-                    {/* END: แก้ไข/เพิ่มเติมเนื้อหา */}
                 </div>
             </div>
         </div>

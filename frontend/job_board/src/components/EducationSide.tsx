@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface EducationSideProps {
     currentProfile: any;
@@ -50,7 +51,7 @@ const EducationSide: React.FC<EducationSideProps> = ({
                     : null,
             });
 
-            alert('อัปเดตข้อมูลการศึกษาสำเร็จ!');
+            toast.success('อัปเดตข้อมูลการศึกษาสำเร็จ!');
 
             //ดึงข้อมูลโปรไฟล์ทั้งหมดมาใหม่
             const response = await api.get('/profiles/candidate/me');
@@ -61,7 +62,7 @@ const EducationSide: React.FC<EducationSideProps> = ({
             onClose();
         } catch (error) {
             console.error('Failed to update education info:', error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
     return (

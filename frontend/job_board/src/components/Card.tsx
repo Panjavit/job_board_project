@@ -1,8 +1,5 @@
-// frontend/job_board/src/components/Card.tsx
-
 import React from 'react';
 
-// 1. ปรับแก้ Interface ให้รับข้อมูลเป็นก้อน และรับฟังก์ชัน onCardClick
 interface StudentData {
     id: string;
     studentCode: string | null;
@@ -13,11 +10,9 @@ interface StudentData {
     updatedAt: string;
     studyYear: number | null;
     skills: { skill: { name: string } }[];
-    internshipApplications: {
-        internshipType: string;
-        startDate: string;
-        endDate: string;
-    }[];
+    internshipType: string | null;
+    startDate: string | null;
+    endDate: string | null;
 }
 
 interface CardProps {
@@ -25,7 +20,7 @@ interface CardProps {
   onCardClick: (studentId: string) => void;
 }
 
-const getInternshipTypeText = (type: string | undefined) => {
+const getInternshipTypeText = (type: string | null | undefined) => {
     switch (type) {
         case 'FULL_TIME': return 'พนักงานประจำ';
         case 'PART_TIME': return 'พาร์ทไทม์';
@@ -36,12 +31,11 @@ const getInternshipTypeText = (type: string | undefined) => {
 
 const Card: React.FC<CardProps> = ({ student, onCardClick }) => {
     
-    const application = student.internshipApplications?.[0];
-    const period = application 
-        ? `${new Date(application.startDate).toLocaleDateString('th-TH')} - ${new Date(application.endDate).toLocaleDateString('th-TH')}`
+    // 2. เปลี่ยนมาใช้ข้อมูลจาก student โดยตรง
+    const period = student.startDate && student.endDate
+        ? `${new Date(student.startDate).toLocaleDateString('th-TH')} - ${new Date(student.endDate).toLocaleDateString('th-TH')}`
         : 'ไม่ระบุ';
 
-    // 2. เปลี่ยนจากการใช้ <Link> มาเป็น <div> ที่มี onClick
     return (
         <div 
             onClick={() => onCardClick(student.id)} 
@@ -71,7 +65,8 @@ const Card: React.FC<CardProps> = ({ student, onCardClick }) => {
                 </div>
                 <ul className="mt-4 flex grow flex-col space-y-2 text-sm">
                     <li><span className="font-semibold w-24 inline-block">ช่วงฝึกงาน:</span> {period}</li>
-                    <li><span className="font-semibold w-24 inline-block">รูปแบบ:</span> {getInternshipTypeText(application?.internshipType)}</li>
+                    {/* 3. ใช้ student.internshipType โดยตรง */}
+                    <li><span className="font-semibold w-24 inline-block">รูปแบบ:</span> {getInternshipTypeText(student.internshipType)}</li>
                     <li><span className="font-semibold w-24 inline-block">ระดับการศึกษา:</span> {`ปริญญาตรี ปี ${student.studyYear || '-'}`}</li>
                     <li><span className="font-semibold w-24 inline-block">สาขาวิชา:</span> {student.major || 'ไม่ระบุ'}</li>
                     <li className="flex"><span className="font-semibold w-24 inline-block shrink-0">สกิลที่มี:</span><p className="truncate">{student.skills.map(s => s.skill.name).join(', ') || 'ไม่มี'}</p></li>

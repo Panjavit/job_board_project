@@ -1,6 +1,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 interface LoginAlertModalProps {
     isOpen: boolean;

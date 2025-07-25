@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface CompanyProfile {
     companyName: string;
@@ -60,12 +61,12 @@ const CompanyInfoSide: React.FC<CompanyInfoSideProps> = ({
         e.preventDefault();
         try {
             const response = await api.put('/profiles/company/me', formData);
-            alert('อัปเดตข้อมูลบริษัทสำเร็จ!');
+            toast.success('อัปเดตข้อมูลบริษัทสำเร็จ!');
             onUpdate(response.data); //ส่งข้อมูลใหม่กลับไปอัปเดตหน้าหลัก
             onClose();
         } catch (error) {
             console.error('Failed to update company profile:', error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 

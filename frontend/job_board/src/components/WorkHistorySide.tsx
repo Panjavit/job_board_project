@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 interface WorkHistoryFormData{
     companyName: string;
@@ -67,12 +68,12 @@ const WorkHistorySide: React.FC<WorkHistorySideProps> = ({ workHistoryItem, onUp
             // ดึงข้อมูลโปรไฟล์ล่าสุดมาอัปเดตหน้าเว็บ
             const response = await api.get('/profiles/candidate/me');
             onUpdate(response.data);
-            alert('บันทึกข้อมูลสำเร็จ!');
+            toast.success('บันทึกข้อมูลสำเร็จ!');
             onClose();
 
         } catch (error) {
             console.error("Failed to save work history:", error);
-            alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            toast.error('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
         }
     };
 
